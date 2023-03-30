@@ -1,0 +1,7 @@
+#! /bin/bash -e
+set -x
+
+flake8 scrapyio tests
+black --check --diff scrapyio tests
+isort --check --diff scrapyio tests
+mypy scrapyio tests

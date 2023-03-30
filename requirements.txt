@@ -1,0 +1,6 @@
+
+# Linters
+black
+isort
+mypy
+flake8
