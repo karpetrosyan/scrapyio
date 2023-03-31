@@ -18,11 +18,11 @@ def load_settings(path: typing.Optional[str] = None):
     custom_configs: typing.Union[ModuleType, object]
     try:
         custom_configs = __import__(path or SETTINGS_FILE_NAME_FOR_IMPORT)
-    except FileNotFoundError:
+    except ModuleNotFoundError:
         custom_configs = object()
 
     for attr in CONFIGS_TO_LOAD:
-        value = getattr(custom_configs, attr)
+        value = getattr(custom_configs, attr, None)
         if value:
             setattr(default_configs, attr, value)
     LOADED = True
