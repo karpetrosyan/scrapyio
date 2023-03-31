@@ -1,0 +1,4 @@
+#! /bin/bash -e
+set -x
+
+pip install -r requirements.txt

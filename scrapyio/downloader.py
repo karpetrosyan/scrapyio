@@ -70,7 +70,7 @@ class BaseDownloader(ABC):
             )
             if cleanup_and_response is None:
                 clean_up = self.send_request(request=request)
-                response = await anext(clean_up)
+                response = await clean_up.__anext__()
             else:
                 clean_up, response = cleanup_and_response
             next_request = await self._send_response_via_middlewares(response=response)

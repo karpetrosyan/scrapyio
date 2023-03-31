@@ -82,7 +82,7 @@ async def test_explicit_response_return_middleware(app):
                     yield response
 
             gen = do_request()
-            response = await anext(gen)
+            response = await gen.__anext__()
             return gen, response
 
     downloader = Downloader()

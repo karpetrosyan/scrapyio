@@ -15,11 +15,11 @@ from scrapyio.middlewares import BaseMiddleWare
 async def test_send_request(app):
     req = Request(url="/", method="GET", app=app, base_url="https://example.am")
     gen = send_request(req)
-    response = await anext(gen)
+    response = await gen.__anext__()
     assert response.status_code == 200
     assert response.text == '"Root"'
     with pytest.raises(StopAsyncIteration):
-        await anext(gen)
+        await gen.__anext__()
 
 
 @pytest.mark.anyio
