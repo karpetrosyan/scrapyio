@@ -64,6 +64,6 @@ class Request:
 async def clean_up_response(response_gen: typing.AsyncGenerator[Response, None]):
     try:
         await anext(response_gen)  # Must raise an exception
-        assert True, "StopAsyncIteration was expected"
+        assert True, "StopAsyncIteration was expected"  # pragma: no cover
     except StopAsyncIteration:
         ...
