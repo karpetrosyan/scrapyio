@@ -5,36 +5,79 @@ from abc import abstractmethod
 import httpx
 from httpx._client import USE_CLIENT_DEFAULT
 from httpx._client import Response
+from httpx._types import CertTypes
+from httpx._types import CookieTypes
+from httpx._types import ProxiesTypes
+from httpx._types import TimeoutTypes
+from httpx._types import URLTypes
+from httpx._types import VerifyTypes
 
+from . import default_configs
 from .exceptions import IgnoreRequestError
+from .http import Request
+from .http import clean_up_response
 from .middlewares import BaseMiddleWare
+from .middlewares import build_middlewares_chain
 from .types import CLEANUP_WITH_RESPONSE
 
-if typing.TYPE_CHECKING:
-    from .spider import Request
+T = typing.TypeVar("T")
+Y = typing.TypeVar("Y")
 
 
 class BaseDownloader(ABC):
     def __init__(self):
-        self.middlewares: typing.List[BaseMiddleWare] = []
+        self.middlewares: typing.List[BaseMiddleWare] = build_middlewares_chain()
 
-    async def _send_request_via_middlewares(self, request: "Request") -> None:
+    async def _send_request_via_middlewares(
+        self, request: "Request"
+    ) -> typing.Union[None, CLEANUP_WITH_RESPONSE]:
         for middleware in self.middlewares:
-            await middleware.process_request(request=request)
+            resp = await middleware.process_request(request=request)
+            if resp is not None:
+                if isinstance(resp, tuple):
+                    return resp
+                else:
+                    raise TypeError(
+                        "Request processing middleware must return "
+                        "either `Tuple[CLEANUP_WITH_RESPONSE]` or "
+                        "`None` not `%s`" % resp.__class__.__name__
+                    )
 
-    async def _send_response_via_middlewares(self, response: Response) -> None:
+    async def _send_response_via_middlewares(
+        self, response: Response
+    ) -> typing.Union[None, Request]:
         for middleware in reversed(self.middlewares):
-            await middleware.process_response(response=response)
+            request = await middleware.process_response(response=response)
+            if request is not None:
+                if isinstance(request, Request):
+                    return request
+                else:
+                    raise TypeError(
+                        "Response processing middleware must return "
+                        "either `Request` or `None` not `%s`"
+                        % request.__class__.__name__
+                    )
 
-    async def send_request(
+    def send_request(self, request: "Request") -> typing.AsyncGenerator[Response, None]:
+        return send_request(request=request)
+
+    async def _process_request_with_middlewares(
         self, request: "Request"
     ) -> typing.Optional[CLEANUP_WITH_RESPONSE]:
         try:
-            await self._send_request_via_middlewares(request=request)
-            response_generator = send_request(request=request)
-            response = await anext(response_generator)
-            await self._send_response_via_middlewares(response=response)
-            return response_generator, response
+            cleanup_and_response = await self._send_request_via_middlewares(
+                request=request
+            )
+            if cleanup_and_response is None:
+                clean_up = self.send_request(request=request)
+                response = await anext(clean_up)
+            else:
+                clean_up, response = cleanup_and_response
+            next_request = await self._send_response_via_middlewares(response=response)
+            if next_request is not None:
+                await clean_up_response(clean_up)
+                return await self._process_request_with_middlewares(request=next_request)
+            return clean_up, response
         except IgnoreRequestError:
             return None
 
@@ -49,8 +92,109 @@ class Downloader(BaseDownloader):
     async def handle_request(
         self, request: "Request"
     ) -> typing.Optional[CLEANUP_WITH_RESPONSE]:
-        response_gen = await self.send_request(request=request)
+        response_gen = await self._process_request_with_middlewares(request=request)
         return response_gen
+
+
+class SessionDownloader(BaseDownloader):
+    def __init__(
+        self,
+        app: typing.Optional[typing.Callable[..., typing.Any]] = None,
+        base_url: URLTypes = "",
+        cookies: typing.Optional[CookieTypes] = None,
+        proxies: typing.Optional[ProxiesTypes] = None,
+        verify: typing.Optional[VerifyTypes] = None,
+        cert: typing.Optional[CertTypes] = None,
+        http1: typing.Optional[bool] = None,
+        http2: typing.Optional[bool] = None,
+        timeout: typing.Optional[TimeoutTypes] = None,
+        trust_env: typing.Optional[bool] = None,
+    ):
+        super().__init__()
+        self.session: httpx.AsyncClient = create_default_session(
+            app=app,
+            base_url=base_url,
+            cookies=cookies,
+            proxies=proxies,
+            verify=verify,
+            cert=cert,
+            http1=http1,
+            http2=http2,
+            timeout=timeout,
+            trust_env=trust_env,
+        )
+
+    async def handle_request(
+        self, request: "Request"
+    ) -> typing.Optional[CLEANUP_WITH_RESPONSE]:
+        return await self._process_request_with_middlewares(request=request)
+
+    def send_request(self, request: "Request") -> typing.AsyncGenerator[Response, None]:
+        return send_request_with_session(session=self.session, request=request)
+
+
+def first_not_none(o1: T, o2: Y) -> Y:
+    if o1 is not None:
+        return typing.cast(Y, o1)
+    return o2
+
+
+def create_default_session(
+    app: typing.Optional[typing.Callable[..., typing.Any]],
+    base_url: URLTypes,
+    cookies: typing.Optional[CookieTypes],
+    proxies: typing.Optional[ProxiesTypes],
+    verify: typing.Optional[VerifyTypes],
+    cert: typing.Optional[CertTypes],
+    http1: typing.Optional[bool],
+    http2: typing.Optional[bool],
+    timeout: typing.Optional[TimeoutTypes],
+    trust_env: typing.Optional[bool],
+) -> httpx.AsyncClient:
+    return httpx.AsyncClient(
+        app=app,
+        base_url=base_url,
+        cookies=first_not_none(cookies, default_configs.DEFAULT_COOKIES),
+        proxies=first_not_none(proxies, default_configs.DEFAULT_PROXIES),
+        cert=first_not_none(cert, default_configs.DEFAULT_CERTS),
+        verify=first_not_none(verify, default_configs.DEFAULT_VERIFY_SSL),
+        timeout=first_not_none(timeout, default_configs.REQUEST_TIMEOUT),
+        trust_env=first_not_none(trust_env, default_configs.DEFAULT_TRUST_ENV),
+        http1=first_not_none(http1, default_configs.HTTP_1),
+        http2=first_not_none(http2, default_configs.HTTP_2),
+    )
+
+
+async def send_request_with_session(
+    session: httpx.AsyncClient, request: "Request"
+) -> typing.AsyncGenerator[Response, None]:
+    if request.stream:
+        async with session.stream(
+            method=request.method,
+            url=request.url,
+            content=request.content,
+            data=request.data,
+            files=request.files,
+            json=request.json,
+            params=request.params,
+            headers=request.headers,
+            auth=USE_CLIENT_DEFAULT,
+            follow_redirects=request.follow_redirects,
+        ) as response:
+            yield response
+    response = await session.request(
+        method=request.method,
+        url=request.url,
+        content=request.content,
+        data=request.data,
+        files=request.files,
+        json=request.json,
+        params=request.params,
+        headers=request.headers,
+        auth=USE_CLIENT_DEFAULT,
+        follow_redirects=request.follow_redirects,
+    )
+    yield response
 
 
 async def send_request(request: "Request") -> typing.AsyncGenerator[Response, None]:
@@ -65,9 +209,9 @@ async def send_request(request: "Request") -> typing.AsyncGenerator[Response, No
         http2=request.http2,
         base_url=request.base_url,
         app=request.app,
-    ) as client:
+    ) as session:
         if request.stream:
-            async with client.stream(
+            async with session.stream(
                 method=request.method,
                 url=request.url,
                 content=request.content,
@@ -80,7 +224,7 @@ async def send_request(request: "Request") -> typing.AsyncGenerator[Response, No
                 follow_redirects=request.follow_redirects,
             ) as response:
                 yield response
-        response = await client.request(
+        response = await session.request(
             method=request.method,
             url=request.url,
             content=request.content,

@@ -2,13 +2,11 @@ import typing
 from abc import ABC
 from abc import abstractmethod
 
-from httpx._client import Response
-
 from . import default_configs
+from .http import Request
+from .http import Response
+from .types import CLEANUP_WITH_RESPONSE
 from .utils import load_module
-
-if typing.TYPE_CHECKING:
-    from .spider import Request
 
 
 def build_middlewares_chain() -> typing.List["BaseMiddleWare"]:
@@ -20,11 +18,13 @@ def build_middlewares_chain() -> typing.List["BaseMiddleWare"]:
 
 class BaseMiddleWare(ABC):
     @abstractmethod
-    async def process_request(self, request: "Request") -> None:
+    async def process_request(
+        self, request: "Request"
+    ) -> typing.Union[None, CLEANUP_WITH_RESPONSE]:
         ...
 
     @abstractmethod
-    async def process_response(self, response: Response) -> None:
+    async def process_response(self, response: Response) -> typing.Union[None, Request]:
         ...
 
 

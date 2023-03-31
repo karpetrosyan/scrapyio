@@ -1,6 +1,8 @@
 
-# Linters
-black
-isort
-mypy
-flake8
+# typing
+mypy==1.1.1
+
+# linters
+black==23.30
+isort==5.12.0
+flake8==6.0.0

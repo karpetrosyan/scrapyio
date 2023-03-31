@@ -2,6 +2,7 @@ import typing
 from dataclasses import dataclass
 from dataclasses import field
 
+from httpx import Response
 from httpx._config import Timeout
 from httpx._types import AuthTypes
 from httpx._types import CertTypes
@@ -58,3 +59,11 @@ class Request:
     stream: bool = default_configs.ENABLE_STREAM_BY_DEFAULT
     app: typing.Optional[typing.Callable[..., typing.Any]] = None
     base_url: URLTypes = ""
+
+
+async def clean_up_response(response_gen: typing.AsyncGenerator[Response, None]):
+    try:
+        await anext(response_gen)  # Must raise an exception
+        assert True, "StopAsyncIteration was expected"
+    except StopAsyncIteration:
+        ...

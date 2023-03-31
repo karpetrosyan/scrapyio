@@ -8,6 +8,7 @@ from httpx._client import Response
 from .downloader import BaseDownloader
 from .downloader import Downloader
 from .http import Request
+from .http import clean_up_response
 from .settings import load_settings
 from .types import CLEANUP_WITH_RESPONSE
 
@@ -20,8 +21,8 @@ class BaseSpider(ABC):
     start_requests: typing.ClassVar[typing.List[Request]] = []
 
     def __init__(self):
-        self.requests = self.start_requests
-        self.items: typing.List[Item] = []
+        self.requests = self.start_requests  # pragma: no cover
+        self.items: typing.List[Item] = []  # pragma: no cover
 
     @abstractmethod
     async def parse(
@@ -79,11 +80,7 @@ class Engine:
                         % yielded_value.__class__.__name__
                     )
         finally:
-            try:
-                await anext(clean_up_generator)  # Must raise an exception
-                assert True, "StopAsyncIteration was expected"
-            except StopAsyncIteration:
-                ...
+            await clean_up_response(clean_up_generator)
 
     async def _handle_responses(
         self, responses: typing.Iterable[CLEANUP_WITH_RESPONSE]
