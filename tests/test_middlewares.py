@@ -144,7 +144,7 @@ async def test_invalid_middlewares_returns(app):
 
     class CustomMiddleWare(BaseMiddleWare):
         async def process_response(self, response):
-            ...
+            raise NotImplementedError
 
         async def process_request(self, request):
             return 5
