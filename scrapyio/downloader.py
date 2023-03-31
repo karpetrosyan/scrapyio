@@ -76,7 +76,9 @@ class BaseDownloader(ABC):
             next_request = await self._send_response_via_middlewares(response=response)
             if next_request is not None:
                 await clean_up_response(clean_up)
-                return await self._process_request_with_middlewares(request=next_request)
+                return await self._process_request_with_middlewares(
+                    request=next_request
+                )
             return clean_up, response
         except IgnoreRequestError:
             return None
