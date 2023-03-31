@@ -26,4 +26,4 @@ ignore_errors = True
 
 [run]
 omit =
-    "tmp*.py"
+    tmp*.py
