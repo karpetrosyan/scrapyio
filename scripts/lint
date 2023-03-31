@@ -1,0 +1,7 @@
+#! /bin/bash -e
+set -x
+
+PROJECT="scrapyio tests"
+
+isort $PROJECT
+black $PROJECT
