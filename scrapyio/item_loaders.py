@@ -4,6 +4,8 @@ from abc import abstractmethod
 from enum import Enum
 from enum import auto
 
+from .utils import random_filename
+
 if typing.TYPE_CHECKING:
     from scrapyio.items import Item
 
@@ -32,9 +34,9 @@ class BaseLoader(ABC):
 
 
 class JSONLoader(BaseLoader):
-    def __init__(self, filename: str):
+    def __init__(self, filename: typing.Optional[str] = None):
         super().__init__()
-        self.filename = filename
+        self.filename = filename or random_filename()
         self.file: typing.Optional[typing.TextIO] = None
         self.first_item: bool = True
 
