@@ -12,6 +12,8 @@ from httpx._types import TimeoutTypes
 from httpx._types import URLTypes
 from httpx._types import VerifyTypes
 
+from scrapyio.utils import first_not_none
+
 from . import default_configs
 from .exceptions import IgnoreRequestError
 from .http import Request
@@ -19,9 +21,6 @@ from .http import clean_up_response
 from .middlewares import BaseMiddleWare
 from .middlewares import build_middlewares_chain
 from .types import CLEANUP_WITH_RESPONSE
-
-T = typing.TypeVar("T")
-Y = typing.TypeVar("Y")
 
 
 class BaseDownloader(ABC):
@@ -133,12 +132,6 @@ class SessionDownloader(BaseDownloader):
 
     def send_request(self, request: "Request") -> typing.AsyncGenerator[Response, None]:
         return send_request_with_session(session=self.session, request=request)
-
-
-def first_not_none(o1: T, o2: Y) -> Y:
-    if o1 is not None:
-        return typing.cast(Y, o1)
-    return o2
 
 
 def create_default_session(
