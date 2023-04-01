@@ -5,14 +5,11 @@ from abc import abstractmethod
 from httpx._client import Response
 
 from .http import Request
-
-
-class Item:
-    ...
+from .items import Item
 
 
 class BaseSpider(ABC):
-    start_requests: typing.ClassVar[typing.List[typing.Union[Request, str]]] = []
+    start_requests: typing.ClassVar[typing.List[Request]] = []
 
     def __init__(self):
         self.requests = self.start_requests  # pragma: no cover

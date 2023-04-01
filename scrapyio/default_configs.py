@@ -8,6 +8,8 @@ from httpx._types import ProxiesTypes
 from httpx._types import QueryParamTypes
 from httpx._types import VerifyTypes
 
+ITEM_MIDDLEWARES: typing.List[str] = []
+
 # Middlewares
 #   path to the middlewares
 #   example: 'scrapyio.middlewares.BaseMiddleWare'
