@@ -1,27 +1,55 @@
 import asyncio
 import inspect
 import typing
+from warnings import warn
 
 from scrapyio import Request
 from scrapyio.downloader import BaseDownloader
 from scrapyio.downloader import Downloader
 from scrapyio.http import clean_up_response
+from scrapyio.item_loaders import BaseLoader
+from scrapyio.items import ItemManager
 from scrapyio.settings import load_settings
 from scrapyio.spider import BaseSpider
 from scrapyio.spider import Item
 from scrapyio.types import CLEANUP_WITH_RESPONSE
 
+from .utils import first_not_none
+
 
 class Engine:
     downloader_class: typing.ClassVar[typing.Type[BaseDownloader]] = Downloader
+    items_manager_class: typing.ClassVar[
+        typing.Optional[typing.Type[ItemManager]]
+    ] = None
+    loader_class: typing.ClassVar[typing.Optional[typing.Type[BaseLoader]]] = None
 
     def __init__(
-        self, spider_class: typing.Type[BaseSpider], enable_settings: bool = True
+        self,
+        spider_class: typing.Type[BaseSpider],
+        downloader_class: typing.Optional[typing.Type[BaseDownloader]] = None,
+        items_manager_class: typing.Optional[typing.Type[ItemManager]] = None,
+        enable_settings: bool = True,
     ):
         if enable_settings:
             load_settings()  # pragma: no cover
-        self.downloader: BaseDownloader = self.downloader_class()
+        downloader_class = first_not_none(downloader_class, self.downloader_class)
+        items_manager_class = first_not_none(
+            items_manager_class, self.items_manager_class
+        )
+
+        self.downloader: BaseDownloader = downloader_class()
         self.spider = spider_class()
+        self.items_manager: typing.Optional[ItemManager] = (
+            items_manager_class() if items_manager_class else None
+        )
+
+        if self.items_manager is None:
+            warn(
+                "Because no `items_manager` was specified, all items"
+                " yielded by the 'parse' method will be ignored.",
+                RuntimeWarning,
+            )
 
     async def _send_single_request_to_downloader(
         self, request: Request
@@ -80,7 +108,14 @@ class Engine:
         ]
         await asyncio.gather(*tasks)
 
+    async def run_once(self):
+        responses = await self._send_all_requests_to_downloader()
+        await self._handle_responses(responses=responses)
+        if self.items_manager:
+            await self.items_manager.process_items(self.spider.items)
+
+        self.spider.items.clear()
+
     async def run(self):
         while self.spider.requests:
-            responses = await self._send_all_requests_to_downloader()
-            await self._handle_responses(responses=responses)
+            await self.run_once()
