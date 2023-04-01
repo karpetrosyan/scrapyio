@@ -5,3 +5,5 @@ vunv
 venv
 .coverage
 htmlcov
+dist
+example

@@ -1,5 +1,8 @@
 .[orjson]
 
+# packaging
+hatch==1.6.3
+
 # typing
 mypy==1.1.1
 
