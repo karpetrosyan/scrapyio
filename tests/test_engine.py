@@ -1,4 +1,6 @@
+import tempfile
 import typing
+from pathlib import Path
 from warnings import catch_warnings
 
 import pytest
@@ -8,6 +10,8 @@ from scrapyio import Response
 from scrapyio.downloader import Downloader
 from scrapyio.downloader import SessionDownloader
 from scrapyio.engines import Engine
+from scrapyio.item_loaders import JSONLoader
+from scrapyio.item_loaders import LoaderState
 from scrapyio.items import Item
 from scrapyio.items import ItemManager
 from scrapyio.spider import BaseSpider
@@ -110,12 +114,13 @@ def test_engine_configs():
         ...
 
     class MyEngine(Engine):
+        items_manager_class = ItemManager
         downloader_class = SessionDownloader
 
     session_engine = MyEngine(spider_class=FakeSpider, enable_settings=False)
     assert isinstance(session_engine.downloader, SessionDownloader)
     engine = MyEngine(
-        spider_class=FakeSpider, enable_settings=False, downloader_class=Downloader
+        spider_class=FakeSpider, enable_settings=False, downloader=Downloader()
     )
     assert isinstance(engine.downloader, Downloader)
 
@@ -182,7 +187,34 @@ async def test_engine_with_item_manager(app):
             yield None
 
     engine = Engine(
-        spider_class=Spider, items_manager_class=ItemManager, enable_settings=False
+        spider_class=Spider, items_manager=ItemManager(), enable_settings=False
     )
     await engine.run_once()
     assert engine.spider.requests == []
+
+
+@pytest.mark.anyio
+async def test_engine_clean_up(monkeypatch, app):
+    with tempfile.TemporaryDirectory() as tempdir:
+
+        class Spider(BaseSpider):
+            start_requests = [
+                Request(
+                    url="/best_scraping_library",
+                    method="GET",
+                    base_url="https://example.com",
+                    app=app,
+                )
+            ]
+
+            async def parse(
+                self, response: Response
+            ) -> typing.AsyncGenerator[typing.Union[Request, Item, None], None]:
+                yield Item()
+
+        item_manager = ItemManager(loader=JSONLoader(filename=Path(tempdir) / "test"))
+        engine = Engine(
+            spider_class=Spider, items_manager=item_manager, enable_settings=False
+        )
+        await engine.run()
+        assert engine.items_manager.loader.state == LoaderState.CLOSED

@@ -8,13 +8,12 @@ from scrapyio.downloader import BaseDownloader
 from scrapyio.downloader import Downloader
 from scrapyio.http import clean_up_response
 from scrapyio.item_loaders import BaseLoader
+from scrapyio.item_loaders import LoaderState
 from scrapyio.items import ItemManager
 from scrapyio.settings import load_settings
 from scrapyio.spider import BaseSpider
 from scrapyio.spider import Item
 from scrapyio.types import CLEANUP_WITH_RESPONSE
-
-from .utils import first_not_none
 
 
 class Engine:
@@ -27,22 +26,28 @@ class Engine:
     def __init__(
         self,
         spider_class: typing.Type[BaseSpider],
-        downloader_class: typing.Optional[typing.Type[BaseDownloader]] = None,
-        items_manager_class: typing.Optional[typing.Type[ItemManager]] = None,
+        downloader: typing.Optional[BaseDownloader] = None,
+        items_manager: typing.Optional[ItemManager] = None,
+        loader: typing.Optional[BaseLoader] = None,
         enable_settings: bool = True,
     ):
+        self.spider = spider_class()
         if enable_settings:
             load_settings()  # pragma: no cover
-        downloader_class = first_not_none(downloader_class, self.downloader_class)
-        items_manager_class = first_not_none(
-            items_manager_class, self.items_manager_class
-        )
 
-        self.downloader: BaseDownloader = downloader_class()
-        self.spider = spider_class()
-        self.items_manager: typing.Optional[ItemManager] = (
-            items_manager_class() if items_manager_class else None
-        )
+        self.downloader: BaseDownloader
+        if downloader is None:
+            self.downloader = self.downloader_class()
+        else:
+            self.downloader = downloader
+
+        self.items_manager: typing.Optional[ItemManager] = None
+
+        if items_manager is None:
+            if self.items_manager_class is not None:
+                self.items_manager = self.items_manager_class()
+        else:
+            self.items_manager = items_manager
 
         if self.items_manager is None:
             warn(
@@ -116,6 +121,20 @@ class Engine:
 
         self.spider.items.clear()
 
+    async def _tear_down(self):
+        if (
+            self.items_manager
+            and self.items_manager.loader
+            and self.items_manager.loader.state == LoaderState.OPENED
+        ):
+            await self.items_manager.loader.close()
+
     async def run(self):
-        while self.spider.requests:
-            await self.run_once()
+        try:
+            while self.spider.requests:
+                await self.run_once()
+        except (Exception, asyncio.CancelledError):
+            await self._tear_down()
+            raise
+        else:
+            await self._tear_down()
