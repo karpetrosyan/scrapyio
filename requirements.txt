@@ -1,4 +1,4 @@
-.
+.[orjson]
 
 # typing
 mypy==1.1.1

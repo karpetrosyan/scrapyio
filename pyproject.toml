@@ -24,9 +24,15 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-"httpx==0.23.3"
+  "httpx==0.23.3"
 ]
+
 dynamic = ["version"]
+
+[project.optional-dependencies]
+orjson = [
+  "orjson==3.8.9"
+]
 
 [project.urls]
 Documentation = "https://github.com/karosis88/scrapyio#readme"
