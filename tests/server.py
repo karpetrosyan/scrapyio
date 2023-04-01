@@ -24,3 +24,8 @@ def headers(request: Request):
 @app.get("/for_moving")
 def moving():
     return 200
+
+
+@app.get("/best_scraping_library")
+def best_scraping_library():
+    return "scrapyio"

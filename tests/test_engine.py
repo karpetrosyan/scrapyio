@@ -1,7 +1,15 @@
+import typing
+from warnings import catch_warnings
+
 import pytest
 
 from scrapyio import Request
+from scrapyio import Response
+from scrapyio.downloader import Downloader
+from scrapyio.downloader import SessionDownloader
 from scrapyio.engines import Engine
+from scrapyio.items import Item
+from scrapyio.items import ItemManager
 from scrapyio.spider import BaseSpider
 
 
@@ -95,3 +103,86 @@ async def test_engine_parser_yield_request(app):
     assert engine.spider.requests == []
     await engine._handle_responses(responses)
     assert len(engine.spider.requests) == 1
+
+
+def test_engine_configs():
+    class FakeSpider:
+        ...
+
+    class MyEngine(Engine):
+        downloader_class = SessionDownloader
+
+    session_engine = MyEngine(spider_class=FakeSpider, enable_settings=False)
+    assert isinstance(session_engine.downloader, SessionDownloader)
+    engine = MyEngine(
+        spider_class=FakeSpider, enable_settings=False, downloader_class=Downloader
+    )
+    assert isinstance(engine.downloader, Downloader)
+
+
+@pytest.mark.anyio
+async def test_engine_item_processing(app):
+    class MyItem(Item):
+        best_scraping_library: str
+
+    class Spider(BaseSpider):
+        start_requests = [
+            Request(
+                url="/best_scraping_library",
+                method="GET",
+                base_url="https://example.com",
+                app=app,
+            )
+        ]
+
+        async def parse(
+            self, response: Response
+        ) -> typing.AsyncGenerator[typing.Union[Request, Item], None]:
+            yield MyItem(best_scraping_library=response.text)
+            yield MyItem(best_scraping_library=response.text)
+            yield Request(
+                url="/best_scraping_library",
+                method="GET",
+                base_url="https://example.com",
+                app=app,
+            )
+
+    engine = Engine(spider_class=Spider, enable_settings=False)
+    await engine.run_once()
+    assert len(engine.spider.requests) == 1
+    assert engine.spider.items == []
+
+
+@pytest.mark.filterwarnings("once::RuntimeWarning")
+@pytest.mark.anyio
+def test_engine_without_items_manager_warning():
+    with catch_warnings(record=True) as w:
+        Engine(spider_class=lambda: 0, enable_settings=False)
+        assert w
+        assert len(w) == 1
+        (warning,) = w
+        assert warning.category == RuntimeWarning
+
+
+@pytest.mark.anyio
+async def test_engine_with_item_manager(app):
+    class Spider(BaseSpider):
+        start_requests = [
+            Request(
+                url="/best_scraping_library",
+                method="GET",
+                base_url="https://example.com",
+                app=app,
+            )
+        ]
+
+        async def parse(
+            self, response: Response
+        ) -> typing.AsyncGenerator[typing.Union[Request, Item, None], None]:
+            yield None
+
+    engine = Engine(
+        spider_class=Spider, items_manager_class=ItemManager, enable_settings=False
+    )
+    await engine.run_once()
+    assert engine.spider.requests == []

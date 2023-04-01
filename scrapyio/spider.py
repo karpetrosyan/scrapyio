@@ -18,6 +18,6 @@ class BaseSpider(ABC):
     @abstractmethod
     async def parse(
         self, response: Response
-    ) -> typing.AsyncGenerator[typing.Union[Request, Item], None]:
+    ) -> typing.AsyncGenerator[typing.Union[Request, Item, None], None]:
         if False:
             yield Request()

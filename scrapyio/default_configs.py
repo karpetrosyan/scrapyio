@@ -13,7 +13,7 @@ ITEM_MIDDLEWARES: typing.List[str] = []
 # Middlewares
 #   path to the middlewares
 #   example: 'scrapyio.middlewares.BaseMiddleWare'
-MIDDLEWARES: typing.List[str] = ["scrapyio.middlewares.TestMiddleWare"]
+MIDDLEWARES: typing.List[str] = []
 
 # Timeout for httpx request
 REQUEST_TIMEOUT: int = 5
