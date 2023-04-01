@@ -6,3 +6,5 @@ set -x
 
 
 coverage run -m pytest $@
+
+./scripts/coverage

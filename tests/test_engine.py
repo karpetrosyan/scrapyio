@@ -9,6 +9,7 @@ from scrapyio.downloader import Downloader
 from scrapyio.downloader import SessionDownloader
 from scrapyio.engines import Engine
 from scrapyio.items import Item
+from scrapyio.items import ItemManager
 from scrapyio.spider import BaseSpider
 
 
@@ -161,3 +162,27 @@ def test_engine_without_items_manager_warning():
         assert len(w) == 1
         (warning,) = w
         assert warning.category == RuntimeWarning
+
+
+@pytest.mark.anyio
+async def test_engine_with_item_manager(app):
+    class Spider(BaseSpider):
+        start_requests = [
+            Request(
+                url="/best_scraping_library",
+                method="GET",
+                base_url="https://example.com",
+                app=app,
+            )
+        ]
+
+        async def parse(
+            self, response: Response
+        ) -> typing.AsyncGenerator[typing.Union[Request, Item, None], None]:
+            yield None
+
+    engine = Engine(
+        spider_class=Spider, items_manager_class=ItemManager, enable_settings=False
+    )
+    await engine.run_once()
+    assert engine.spider.requests == []
