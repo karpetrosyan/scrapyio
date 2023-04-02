@@ -63,6 +63,7 @@ class BaseDownloader(ABC):
     async def _process_request_with_middlewares(
         self, request: "Request"
     ) -> typing.Optional[CLEANUP_WITH_RESPONSE]:
+        #  TODO: build middlewares here instead of __init__
         try:
             cleanup_and_response = await self._send_request_via_middlewares(
                 request=request
