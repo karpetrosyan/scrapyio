@@ -1,0 +1,2 @@
+scrapyio==0.0.5
+beautifulsoup4==4.12.0
