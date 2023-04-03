@@ -43,20 +43,20 @@ class JSONLoader(BaseLoader):
     async def open(self) -> None:
         self.state = LoaderState.OPENED
         self.file = open(self.filename, mode="w", encoding="utf-8")
-        self.file.write("[")
+        self.file.write("[\n")
 
     async def dump(self, item: "Item") -> None:
         assert self.file, "Loader's `dump` was called before `open` method"
         serialized_item = item.json()
         if not self.first_item:
-            self.file.write("," + serialized_item)
+            self.file.write(",\n" + serialized_item)
         else:
             self.file.write(serialized_item)
             self.first_item = False
 
     async def close(self) -> None:
         assert self.file, "Loader's `close` was called before `open` method"
-        self.file.write("]")
+        self.file.write("\n]")
         self.file.close()
         self.state = LoaderState.CLOSED
 

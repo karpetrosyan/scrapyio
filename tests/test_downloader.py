@@ -47,7 +47,7 @@ async def test_session_downloader_cookies(app):
 
 
 @pytest.mark.anyio
-async def test_ignoring_requests():
+async def test_ignoring_requests(app):
     class CustomMiddleWare(BaseMiddleWare):
         async def process_response(self, response):
             raise IgnoreRequestError()
@@ -59,7 +59,12 @@ async def test_ignoring_requests():
     downloader.middleware_classes.append(CustomMiddleWare)
 
     resp = await downloader.handle_request(
-        Request(url="https://example.com", method="GET")
+        Request(
+            url="",
+            base_url="https://example.com",
+            method="GET",
+            app=app,
+        )
     )
     assert resp is None
 

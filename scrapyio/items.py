@@ -1,7 +1,9 @@
 import asyncio
+import json
 import typing
 from abc import ABC
 from abc import abstractmethod
+from functools import partial
 
 from pydantic import BaseModel
 
@@ -27,6 +29,11 @@ def build_items_middlewares_chain() -> typing.Sequence["BaseItemMiddleWare"]:
 def orjson_dumps_wrapper(*args, **kwargs) -> str:
     import orjson
 
+    if "option" in kwargs:
+        kwargs["option"] |= orjson.OPT_INDENT_2  # pragma: no cover
+    else:
+        kwargs["option"] = orjson.OPT_INDENT_2
+
     return orjson.dumps(*args, **kwargs).decode(encoding="utf-8")
 
 
@@ -38,7 +45,8 @@ class BaseItem(BaseModel):
             json_dumps = orjson_dumps_wrapper
             json_loads = orjson.loads
         except ImportError:
-            ...
+            json_dumps = partial(json.dumps, indent=2)
+            json_loads = json.loads
 
 
 class Item(BaseItem):
