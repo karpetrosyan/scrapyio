@@ -28,7 +28,6 @@ class Engine:
         spider_class: typing.Type[BaseSpider],
         downloader: typing.Optional[BaseDownloader] = None,
         items_manager: typing.Optional[ItemManager] = None,
-        loader: typing.Optional[BaseLoader] = None,
         enable_settings: bool = True,
     ):
         self.spider = spider_class()
@@ -122,12 +121,14 @@ class Engine:
         self.spider.items.clear()
 
     async def _tear_down(self):
-        if (
-            self.items_manager
-            and self.items_manager.loader
-            and self.items_manager.loader.state == LoaderState.OPENED
-        ):
-            await self.items_manager.loader.close()
+        if self.items_manager and self.items_manager.loaders:
+            await asyncio.gather(
+                *(
+                    loader.close()
+                    for loader in self.items_manager.loaders
+                    if loader.state == LoaderState.OPENED
+                )
+            )
 
     async def run(self):
         try:

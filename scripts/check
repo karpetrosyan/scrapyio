@@ -1,7 +1,9 @@
 #! /bin/bash -e
 set -x
 
+PROJECT="scrapyio tests examples"
+
 flake8 scrapyio tests
-black --check --diff scrapyio tests
-isort --check --diff scrapyio tests
+black --check --diff $PROJECT
+isort --check --diff $PROJECT
 mypy scrapyio tests

@@ -21,11 +21,12 @@ async def test_loader_set_up():
 
     filename = tempfile.mktemp()
     loader = JSONLoader(filename=filename)
-    manager = ItemManager(loader=loader)
+    manager = ItemManager(loaders=[loader])
     try:
         await manager.process_items([MyItem(library_name="scrapyio")])
     finally:
-        await manager.loader.close()
+        loader = manager.loaders[0]
+        await loader.close()
         os.remove(filename)
 
 
@@ -47,11 +48,12 @@ async def test_json_loader_without_orjson(monkeypatch):
 
     filename = tempfile.mktemp()
     loader = JSONLoader(filename=filename)
-    manager = ItemManager(loader=loader)
+    manager = ItemManager(loaders=[loader])
     try:
         await manager.process_items([MyItem(library_name="scrapyio")])
     finally:
-        await manager.loader.close()
+        loader = manager.loaders[0]
+        await loader.close()
         with open(filename, mode="r", encoding="utf-8") as f:
             dumped = json.loads(f.read())
             assert len(dumped) == 1
@@ -68,13 +70,14 @@ async def test_json_loader():
 
     filename = tempfile.mktemp()
     loader = JSONLoader(filename=filename)
-    manager = ItemManager(loader=loader)
+    manager = ItemManager(loaders=[loader])
     try:
         await manager.process_items(
             [MyItem(library_name="scrapyio"), MyItem(library_name="scrapyio")]
         )
     finally:
-        await manager.loader.close()
+        loader = manager.loaders[0]
+        await loader.close()
         with open(filename, mode="r", encoding="utf-8") as f:
             content = f.read()
             dumped = json.loads(content)

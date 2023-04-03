@@ -3,7 +3,9 @@ import json
 import typing
 from abc import ABC
 from abc import abstractmethod
+from asyncio import Task
 from functools import partial
+from warnings import warn
 
 from pydantic import BaseModel
 
@@ -58,12 +60,18 @@ class BaseItemsManager(ABC):
         self,
         ignoring_callback: typing.Optional[ITEM_IGNORING_CALLBACK_TYPE] = None,
         success_callback: typing.Optional[ITEM_ADDED_CALLBACK_TYPE] = None,
-        loader: typing.Optional[BaseLoader] = None,
+        loaders: typing.Optional[typing.List[BaseLoader]] = None,
     ):
         self.middlewares = build_items_middlewares_chain()
         self.ignoring_callback = ignoring_callback
         self.success_callback = success_callback
-        self.loader = loader
+        self.loaders = loaders
+
+        if not loaders:
+            warn(
+                "Nothing will be saved because no "
+                "loaders were specified for the item manager."
+            )
 
     async def _send_single_item_via_middlewares(
         self, item: Item
@@ -91,18 +99,14 @@ class BaseItemsManager(ABC):
         filtered_items = [
             added_item for added_item in await asyncio.gather(*tasks) if added_item
         ]
-
-        if self.loader:
-            if self.loader.state == LoaderState.CREATED:
-                await self.loader.open()
-            loading_tasks = [
-                asyncio.create_task(self.loader.dump(item_to_load))
-                for item_to_load in filtered_items
-            ]
-            await asyncio.gather(
-                *loading_tasks,
-            )
-
+        loading_tasks: typing.List[Task] = []
+        if self.loaders:
+            for loader in self.loaders:
+                if loader.state == LoaderState.CREATED:
+                    await loader.open()
+                for item_to_load in filtered_items:
+                    loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
+        await asyncio.gather(*loading_tasks)
         return typing.cast(typing.List[Item], filtered_items)
 
     @abstractmethod
