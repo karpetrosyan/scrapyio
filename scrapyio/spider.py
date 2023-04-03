@@ -9,10 +9,15 @@ from .items import Item
 
 
 class BaseSpider(ABC):
-    start_requests: typing.ClassVar[typing.List[Request]] = []
+    start_requests: typing.ClassVar[typing.List[typing.Union[Request, str]]] = []
 
     def __init__(self):
-        self.requests = self.start_requests  # pragma: no cover
+        self.requests: typing.List[Request] = [
+            request
+            if isinstance(request, Request)
+            else Request(url=request, method="GET")
+            for request in self.start_requests
+        ]  # pragma: no cover
         self.items: typing.List[Item] = []  # pragma: no cover
 
     @abstractmethod

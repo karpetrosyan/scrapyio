@@ -212,9 +212,12 @@ async def test_engine_clean_up(monkeypatch, app):
             ) -> typing.AsyncGenerator[typing.Union[Request, Item, None], None]:
                 yield Item()
 
-        item_manager = ItemManager(loader=JSONLoader(filename=Path(tempdir) / "test"))
+        item_manager = ItemManager(
+            loaders=[JSONLoader(filename=Path(tempdir) / "test")]
+        )
         engine = Engine(
             spider_class=Spider, items_manager=item_manager, enable_settings=False
         )
         await engine.run()
-        assert engine.items_manager.loader.state == LoaderState.CLOSED
+        loader = engine.items_manager.loaders[0]
+        assert loader.state == LoaderState.CLOSED

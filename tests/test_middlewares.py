@@ -80,7 +80,7 @@ async def test_explicit_response_return_middleware(app):
     downloader = Downloader()
     downloader.middleware_classes.append(CustomMiddleWare)
     gen = await downloader.handle_request(
-        request=Request(url="http://example.com", method="GET")
+        request=Request(url="http://example.com", method="GET", app=app)
     )
     assert gen
     _, response = gen[0], gen[1]
@@ -110,7 +110,7 @@ async def test_explicit_request_return_middleware(app):
     downloader = Downloader()
     downloader.middleware_classes.append(CustomMiddleWare)
     gen = await downloader.handle_request(
-        request=Request(url="http://example.com/", method="GET")
+        request=Request(url="http://example.com/", method="GET", app=app)
     )
     assert gen
     _, response = gen[0], gen[1]
@@ -131,7 +131,7 @@ async def test_invalid_middlewares_returns(app):
     downloader.middleware_classes.append(CustomMiddleWare)
     with pytest.raises(TypeError, match="Response processing middleware must return.*"):
         await downloader.handle_request(
-            request=Request(url="http://example.com", method="GET")
+            request=Request(url="http://example.com", method="GET", app=app)
         )
 
     class CustomMiddleWare(BaseMiddleWare):
@@ -144,5 +144,5 @@ async def test_invalid_middlewares_returns(app):
     downloader.middleware_classes[-1] = CustomMiddleWare
     with pytest.raises(TypeError, match="Request processing middleware must return"):
         await downloader.handle_request(
-            request=Request(url="http://example.com", method="GET")
+            request=Request(url="http://example.com", method="GET", app=app)
         )

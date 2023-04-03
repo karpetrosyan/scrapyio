@@ -1,11 +1,13 @@
-from scrapyio.engines import Engine
-from scrapyio.spider import BaseSpider
+import asyncio
+
+from bs4 import BeautifulSoup
+
 from scrapyio import Request
-from scrapyio.items import ItemManager
+from scrapyio.engines import Engine
 from scrapyio.item_loaders import JSONLoader
 from scrapyio.items import Item
-from bs4 import BeautifulSoup
-import asyncio
+from scrapyio.items import ItemManager
+from scrapyio.spider import BaseSpider
 
 
 class Country(Item):
@@ -16,7 +18,9 @@ class Country(Item):
 
 
 class Spider(BaseSpider):
-    start_requests = [Request(url="https://www.scrapethissite.com/pages/simple/", method="GET")]
+    start_requests = [
+        Request(url="https://www.scrapethissite.com/pages/simple/", method="GET")
+    ]
 
     async def parse(self, response):
         soup = BeautifulSoup(response.text, "html.parser")
@@ -24,11 +28,18 @@ class Spider(BaseSpider):
 
         for country in countries:
             country_name = country.select_one(".country-name").text.strip()
-            country_population = int(country.select_one(".country-population").text.strip())
+            country_population = int(
+                country.select_one(".country-population").text.strip()
+            )
             country_capital = country.select_one(".country-capital").text.strip()
             country_area = float(country.select_one(".country-area").text.strip())
 
-            yield Country(name=country_name, population=country_population, capital=country_capital, area=country_area)
+            yield Country(
+                name=country_name,
+                population=country_population,
+                capital=country_capital,
+                area=country_area,
+            )
 
 
 if __name__ == "__main__":
