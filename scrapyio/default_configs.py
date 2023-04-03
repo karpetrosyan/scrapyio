@@ -8,6 +8,8 @@ from httpx._types import ProxiesTypes
 from httpx._types import QueryParamTypes
 from httpx._types import VerifyTypes
 
+PROXY_CHAIN: typing.List[str] = []
+
 ITEM_MIDDLEWARES: typing.List[str] = []
 
 # Middlewares
