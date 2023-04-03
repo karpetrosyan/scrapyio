@@ -124,7 +124,7 @@ class Engine:
         if self.items_manager and self.items_manager.loaders:
             await asyncio.gather(
                 *(
-                    loader.close()
+                    loader._close()
                     for loader in self.items_manager.loaders
                     if loader.state == LoaderState.OPENED
                 )

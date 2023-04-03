@@ -103,7 +103,7 @@ class BaseItemsManager(ABC):
         if self.loaders:
             for loader in self.loaders:
                 if loader.state == LoaderState.CREATED:
-                    await loader.open()
+                    await loader._open()
                 for item_to_load in filtered_items:
                     loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
         await asyncio.gather(*loading_tasks)

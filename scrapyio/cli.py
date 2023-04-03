@@ -9,6 +9,7 @@ from scrapyio import spider_file_template
 from scrapyio.engines import Engine
 from scrapyio.exceptions import SpiderNotFound
 from scrapyio.item_loaders import BaseLoader
+from scrapyio.item_loaders import CSVLoader
 from scrapyio.item_loaders import JSONLoader
 from scrapyio.items import ItemManager
 from scrapyio.settings import SETTINGS_FILE_NAME
@@ -36,7 +37,8 @@ def new(name):
 @main.command()
 @click.argument("spider")
 @click.option("-j", "--json", type=str)
-def run(spider: str, json: typing.Optional[str]):
+@click.option("-c", "--csv", type=str)
+def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
     import os
     import sys
 
@@ -56,9 +58,14 @@ def run(spider: str, json: typing.Optional[str]):
         raise SpiderNotFound("Spider `%s` was not found in the `spiders.py` file")
 
     loaders: typing.List[BaseLoader] = []
+    loader: BaseLoader
 
     if json is not None:
         loader = JSONLoader(filename=json)
+        loaders.append(loader)
+
+    if csv is not None:
+        loader = CSVLoader(filename=csv)
         loaders.append(loader)
 
     item_manager = ItemManager(loaders=loaders)

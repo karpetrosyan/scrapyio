@@ -9,6 +9,7 @@ import typing
 import pytest
 
 from scrapyio import items
+from scrapyio.item_loaders import CSVLoader
 from scrapyio.item_loaders import JSONLoader
 from scrapyio.items import Item
 from scrapyio.items import ItemManager
@@ -83,4 +84,26 @@ async def test_json_loader():
             dumped = json.loads(content)
             assert len(dumped) == 2
             assert dumped[0]["library_name"] == "scrapyio"
+        os.remove(filename)
+
+
+@pytest.mark.anyio
+async def test_csv_loader():
+    class MyItem(Item):
+        library_name: str
+
+    filename = tempfile.mktemp()
+    loader = CSVLoader(filename=filename)
+    manager = ItemManager(loaders=[loader])
+    try:
+        await manager.process_items(
+            [MyItem(library_name="scrapyio"), MyItem(library_name="scrapyio")]
+        )
+    finally:
+        loader = manager.loaders[0]
+        await loader.close()
+        with open(filename, mode="r", encoding="utf-8") as f:
+            assert f.readline() == "library_name\n"
+            assert f.readline() == "scrapyio\n"
+            assert f.readline() == "scrapyio\n"
         os.remove(filename)
