@@ -17,7 +17,7 @@ async def test_request_middleware(app):
             request.headers["test"] = "test"
 
     downloader = Downloader()
-    downloader.middlewares.append(CustomMiddleWare())
+    downloader.middleware_classes.append(CustomMiddleWare)
     gen = await downloader.handle_request(
         request=Request(
             url="/headers",
@@ -43,7 +43,7 @@ async def test_response_middleware(app):
             ...
 
     downloader = Downloader()
-    downloader.middlewares.append(CustomMiddleWare())
+    downloader.middleware_classes.append(CustomMiddleWare)
     gen = await downloader.handle_request(
         request=Request(
             url="/",
@@ -78,7 +78,7 @@ async def test_explicit_response_return_middleware(app):
             return gen, response
 
     downloader = Downloader()
-    downloader.middlewares.append(CustomMiddleWare())
+    downloader.middleware_classes.append(CustomMiddleWare)
     gen = await downloader.handle_request(
         request=Request(url="http://example.com", method="GET")
     )
@@ -108,7 +108,7 @@ async def test_explicit_request_return_middleware(app):
             ...
 
     downloader = Downloader()
-    downloader.middlewares.append(CustomMiddleWare())
+    downloader.middleware_classes.append(CustomMiddleWare)
     gen = await downloader.handle_request(
         request=Request(url="http://example.com/", method="GET")
     )
@@ -128,7 +128,7 @@ async def test_invalid_middlewares_returns(app):
             ...
 
     downloader = Downloader()
-    downloader.middlewares.append(CustomMiddleWare())
+    downloader.middleware_classes.append(CustomMiddleWare)
     with pytest.raises(TypeError, match="Response processing middleware must return.*"):
         await downloader.handle_request(
             request=Request(url="http://example.com", method="GET")
@@ -141,7 +141,7 @@ async def test_invalid_middlewares_returns(app):
         async def process_request(self, request):
             return 5
 
-    downloader.middlewares[-1] = CustomMiddleWare()
+    downloader.middleware_classes[-1] = CustomMiddleWare
     with pytest.raises(TypeError, match="Request processing middleware must return"):
         await downloader.handle_request(
             request=Request(url="http://example.com", method="GET")

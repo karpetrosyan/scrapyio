@@ -8,11 +8,11 @@ from .types import CLEANUP_WITH_RESPONSE
 from .utils import load_module
 
 
-def build_middlewares_chain() -> typing.List["BaseMiddleWare"]:
+def build_middlewares_chain() -> typing.List[typing.Type["BaseMiddleWare"]]:
     from . import default_configs
 
     return [
-        typing.cast("BaseMiddleWare", load_module(middleware)())
+        typing.cast(typing.Type["BaseMiddleWare"], load_module(middleware))
         for middleware in default_configs.MIDDLEWARES
     ]
 

@@ -25,12 +25,14 @@ from .types import CLEANUP_WITH_RESPONSE
 
 class BaseDownloader(ABC):
     def __init__(self):
-        self.middlewares: typing.List[BaseMiddleWare] = build_middlewares_chain()
+        self.middleware_classes: typing.List[
+            typing.Type[BaseMiddleWare]
+        ] = build_middlewares_chain()
 
     async def _send_request_via_middlewares(
-        self, request: "Request"
+        self, request: "Request", middlewares: typing.List[BaseMiddleWare]
     ) -> typing.Union[None, CLEANUP_WITH_RESPONSE]:
-        for middleware in self.middlewares:
+        for middleware in middlewares:
             resp = await middleware.process_request(request=request)
             if resp is not None:
                 if isinstance(resp, tuple):
@@ -43,9 +45,9 @@ class BaseDownloader(ABC):
                     )
 
     async def _send_response_via_middlewares(
-        self, response: Response
+        self, response: Response, middlewares: typing.List[BaseMiddleWare]
     ) -> typing.Union[None, Request]:
-        for middleware in reversed(self.middlewares):
+        for middleware in reversed(middlewares):
             request = await middleware.process_response(response=response)
             if request is not None:
                 if isinstance(request, Request):
@@ -63,17 +65,19 @@ class BaseDownloader(ABC):
     async def _process_request_with_middlewares(
         self, request: "Request"
     ) -> typing.Optional[CLEANUP_WITH_RESPONSE]:
-        #  TODO: build middlewares here instead of __init__
+        middlewares = [middleware() for middleware in self.middleware_classes]
         try:
             cleanup_and_response = await self._send_request_via_middlewares(
-                request=request
+                request=request, middlewares=middlewares
             )
             if cleanup_and_response is None:
                 clean_up = self.send_request(request=request)
                 response = await clean_up.__anext__()
             else:
                 clean_up, response = cleanup_and_response
-            next_request = await self._send_response_via_middlewares(response=response)
+            next_request = await self._send_response_via_middlewares(
+                response=response, middlewares=middlewares
+            )
             if next_request is not None:
                 await clean_up_response(clean_up)
                 return await self._process_request_with_middlewares(

@@ -56,7 +56,7 @@ async def test_ignoring_requests():
             ...
 
     downloader = Downloader()
-    downloader.middlewares.append(CustomMiddleWare())
+    downloader.middleware_classes.append(CustomMiddleWare)
 
     resp = await downloader.handle_request(
         Request(url="https://example.com", method="GET")
