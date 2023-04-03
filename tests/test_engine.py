@@ -221,3 +221,21 @@ async def test_engine_clean_up(monkeypatch, app):
         await engine.run()
         loader = engine.items_manager.loaders[0]
         assert loader.state == LoaderState.CLOSED
+
+
+def test_spider_string_start_requests():
+    class Spider(BaseSpider):
+        start_requests = ["https://example.com", "http://example.com"]
+
+        async def parse(
+            self, response: Response
+        ) -> typing.AsyncGenerator[typing.Union[Request, Item, None], None]:
+            yield None  # pragma: no cover
+
+    spider = Spider()
+    assert len(spider.requests) == 2
+    assert isinstance(spider.requests[0], Request) and isinstance(
+        spider.requests[1], Request
+    )
+    assert spider.requests[0].url == "https://example.com"
+    assert spider.requests[0].method == "GET"
