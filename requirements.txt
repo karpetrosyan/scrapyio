@@ -1,5 +1,8 @@
 .[orjson]
 
+# loaders support
+sqlalchemy[asyncio]==2.0.8
+
 # packaging
 hatch==1.6.3
 

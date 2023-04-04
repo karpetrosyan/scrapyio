@@ -53,3 +53,30 @@ DEFAULT_TRUST_ENV: bool = False
 
 # Enable stream by default
 ENABLE_STREAM_BY_DEFAULT: bool = False
+
+# Logging configuration
+
+DEFAULT_LOGGING_CONFIG: typing.Dict = {
+    "version": 1,
+    "handlers": {
+        "scrapyio-stream": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+            "level": "DEBUG",
+            "stream": "ext://sys.stderr",
+        },
+    },
+    "formatters": {
+        "standard": {
+            "format": "%(levelname)s [%(module)s:%(lineno)d]"
+            " [%(asctime)s] %(name)s - %(message)s"
+        }
+    },
+    "loggers": {
+        "scrapyio": {
+            "handlers": ["scrapyio-stream"],
+            "level": "DEBUG",
+            "propagate": False,
+        }
+    },
+}

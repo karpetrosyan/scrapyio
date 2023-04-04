@@ -1,16 +1,19 @@
 import builtins
+import datetime
 import importlib
 import json
 import os
 import tempfile
 import types
 import typing
+from pathlib import Path
 
 import pytest
 
 from scrapyio import items
 from scrapyio.item_loaders import CSVLoader
 from scrapyio.item_loaders import JSONLoader
+from scrapyio.item_loaders import SQLAlchemyLoader
 from scrapyio.items import Item
 from scrapyio.items import ItemManager
 
@@ -107,3 +110,75 @@ async def test_csv_loader():
             assert f.readline() == "scrapyio\n"
             assert f.readline() == "scrapyio\n"
         os.remove(filename)
+
+
+@pytest.mark.anyio
+async def test_sqlalchemy_fields_mapper():
+    class MyItem(Item):
+        a: int
+        b: float
+        c: str
+        d: datetime.datetime
+
+    item = MyItem(a=1, b=1.1, c="1.1", d=datetime.datetime.now())
+    mapped_fields = await SQLAlchemyLoader._get_mapped_fields(
+        SQLAlchemyLoader, item=item
+    )
+    mapped_a, mapped_b, mapped_c, mapped_d = mapped_fields
+    from sqlalchemy import DateTime
+    from sqlalchemy import Float
+    from sqlalchemy import Integer
+    from sqlalchemy import String
+
+    assert mapped_a.type.__class__ == Integer
+    assert mapped_b.type.__class__ == Float
+    assert mapped_c.type.__class__ == String
+    assert mapped_d.type.__class__ == DateTime
+
+
+@pytest.mark.anyio
+async def test_sqlalchemy_table_creation(monkeypatch):
+    from sqlalchemy import Table
+
+    with tempfile.TemporaryDirectory() as path:
+        monkeypatch.syspath_prepend(path=path)
+        loader = SQLAlchemyLoader(
+            url="sqlite+aiosqlite:///" + str(Path(path) / "data.db")
+        )
+        try:
+            await loader.open()
+
+            class MyItem(Item):
+                a: int
+
+            await loader._create_table_from_item(MyItem(a=1))
+            assert len(loader.existing_tables) == 1
+            assert isinstance(loader.existing_tables["MyItem"], Table)
+        finally:
+            await loader.close()
+
+
+@pytest.mark.anyio
+async def test_sqlalchemy_loader(monkeypatch):
+    class MyItem(Item):
+        a: int
+        b: str
+
+    with tempfile.TemporaryDirectory() as path:
+        monkeypatch.syspath_prepend(path=path)
+
+        loader = SQLAlchemyLoader(
+            url="sqlite+aiosqlite:///" + str(Path(path) / "data.db")
+        )
+        item_manager = ItemManager(loaders=[loader])
+        try:
+            await item_manager.process_items([MyItem(a=1, b="2")])
+        finally:
+            for loader in item_manager.loaders:
+                await loader.close()
+        import sqlite3
+
+        conn = sqlite3.connect(database=str(Path(path) / "data.db"))
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM MyItem;")
+        assert cursor.fetchone() == (1, 1, "2")
