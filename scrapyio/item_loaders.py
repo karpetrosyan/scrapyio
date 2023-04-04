@@ -10,6 +10,9 @@ if typing.TYPE_CHECKING:
     from scrapyio.items import Item
 
 import csv
+import logging
+
+log = logging.getLogger("scrapyio")
 
 
 class LoaderState(Enum):
@@ -35,10 +38,12 @@ class BaseLoader(ABC):
         ...
 
     async def _open(self, *args, **kwargs) -> None:
+        log.info(f"Setting up the `{self.__class__.__name__}`")
         self.state = LoaderState.OPENED
         await self.open(*args, **kwargs)
 
     async def _close(self, *args, **kwargs) -> None:
+        log.info(f"Closing the `{self.__class__.__name__}`")
         await self.close(*args, **kwargs)
         self.state = LoaderState.CLOSED
 

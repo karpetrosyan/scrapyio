@@ -1,4 +1,5 @@
 import typing
+from logging import config
 from types import ModuleType
 
 from . import default_configs
@@ -28,7 +29,10 @@ CONFIGS_TO_LOAD = (
     "FOLLOW_REDIRECTS",
     "DEFAULT_TRUST_ENV",
     "ENABLE_STREAM_BY_DEFAULT",
+    "DEFAULT_LOGGING_CONFIG",
 )
+
+config.dictConfig(default_configs.DEFAULT_LOGGING_CONFIG)
 
 
 def load_settings(path: typing.Optional[str] = None):

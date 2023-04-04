@@ -1,6 +1,8 @@
+import logging
 import typing
 from dataclasses import dataclass
 from dataclasses import field
+from itertools import count
 
 from httpx import Response
 from httpx._config import Timeout
@@ -19,11 +21,14 @@ from httpx._types import VerifyTypes
 
 from . import default_configs
 
+log = logging.getLogger("scrapyio")
+
 
 @dataclass
 class Request:
     url: str
     method: str
+    id: int = field(default_factory=count().__next__)
     auth: typing.Optional[AuthTypes] = field(
         default_factory=lambda: default_configs.DEFAULT_AUTH
     )
@@ -60,10 +65,16 @@ class Request:
     app: typing.Optional[typing.Callable[..., typing.Any]] = None
     base_url: URLTypes = ""
 
+    def __post_init__(self):
+        log.debug(f"New `Request` instance was created: {self=} was created")
+
 
 async def clean_up_response(response_gen: typing.AsyncGenerator[Response, None]):
     try:
         await response_gen.__anext__()  # Must raise an exception
+        log.error(
+            "Response clean up doesnt raise " "the `StopAsyncIteration` exception"
+        )  # pragma: no cover
         assert True, "StopAsyncIteration was expected"  # pragma: no cover
     except StopAsyncIteration:
         ...
