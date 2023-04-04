@@ -8,6 +8,7 @@ from scrapyio import Request
 from scrapyio import Response
 from scrapyio import SessionDownloader
 from scrapyio.downloader import send_request
+from scrapyio.http import clean_up_response
 from scrapyio.middlewares import BaseMiddleWare
 
 
@@ -85,8 +86,9 @@ async def test_session_stream_request(app):
     downloader = SessionDownloader(app=app, base_url="https://example.com")
     gen = await downloader.handle_request(Request(url="/", method="GET", stream=True))
     assert gen
-    _, response = gen
+    clean_up, response = gen
     await response.aread()
+    await clean_up_response(clean_up)
 
 
 @pytest.mark.anyio
@@ -98,5 +100,6 @@ async def test_stream_request(app):
         )
     )
     assert gen
-    _, response = gen
+    clean_up, response = gen
     await response.aread()
+    await clean_up_response(clean_up)

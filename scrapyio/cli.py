@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import typing
 from pathlib import Path
 
@@ -14,6 +15,8 @@ from scrapyio.item_loaders import JSONLoader
 from scrapyio.items import ItemManager
 from scrapyio.settings import SETTINGS_FILE_NAME
 from scrapyio.settings import SPIDERS_FILE_NAME
+
+log = logging.getLogger("scrapyio")
 
 
 @click.group()
@@ -42,11 +45,17 @@ def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
     import os
     import sys
 
+    log.info("Running the spider")
+
     sys.path.append(os.getcwd())
 
     try:
+        log.debug("Trying to import spiders file")
         import spiders  # type: ignore[import]
+
+        log.debug("Spiders file was imported")
     except ImportError:
+        log.debug("When attempting to import the spiders file, an exception was raised")
         raise SpiderNotFound(
             "File `spiders.py` was not found, make sure you're "
             "calling scrapyio from the directory scrapyio created."
@@ -61,13 +70,17 @@ def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
     loader: BaseLoader
 
     if json is not None:
+        log.debug("Creating the JSON loader")
         loader = JSONLoader(filename=json)
         loaders.append(loader)
 
     if csv is not None:
+        log.debug("Creating the CSV loader")
         loader = CSVLoader(filename=csv)
         loaders.append(loader)
 
     item_manager = ItemManager(loaders=loaders)
+    log.debug("Creating the Engine instance")
     engine = Engine(spider_class=spider_class, items_manager=item_manager)
-    asyncio.run(engine._run_once())
+    log.info("Running engine")
+    asyncio.run(engine.run())

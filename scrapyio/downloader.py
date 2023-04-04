@@ -1,3 +1,4 @@
+import logging
 import typing
 from abc import ABC
 from abc import abstractmethod
@@ -22,6 +23,8 @@ from .middlewares import BaseMiddleWare
 from .middlewares import build_middlewares_chain
 from .types import CLEANUP_WITH_RESPONSE
 
+log = logging.getLogger("scrapyio")
+
 
 class BaseDownloader(ABC):
     def __init__(self):
@@ -32,12 +35,25 @@ class BaseDownloader(ABC):
     async def _send_request_via_middlewares(
         self, request: "Request", middlewares: typing.List[BaseMiddleWare]
     ) -> typing.Union[None, CLEANUP_WITH_RESPONSE]:
+        log.debug(f"Sending the request via middlewares: {request.id=}")
         for middleware in middlewares:
+            log.debug(
+                f"Sending the request via middleware"
+                f" `{middleware.__class__.__name__}`: {request.id=}"
+            )
             resp = await middleware.process_request(request=request)
+            log.debug(
+                f"`{middleware.__class__.__name__}` middleware "
+                f"return value is {resp=!r} for request: {request.id=}`"
+            )
             if resp is not None:
                 if isinstance(resp, tuple):
                     return resp
                 else:
+                    log.info(
+                        f"Invalid value was returned by request"
+                        f" middleware: `{middleware.__class__.__name__}` {request.id=}"
+                    )
                     raise TypeError(
                         "Request processing middleware must return "
                         "either `Tuple[CLEANUP_WITH_RESPONSE]` or "
@@ -47,12 +63,25 @@ class BaseDownloader(ABC):
     async def _send_response_via_middlewares(
         self, response: Response, middlewares: typing.List[BaseMiddleWare]
     ) -> typing.Union[None, Request]:
+        log.debug(f"Sending the response via middlewares: {response=}")
         for middleware in reversed(middlewares):
+            log.debug(
+                f"Sending the response via middleware"
+                f" `{middleware.__class__.__name__}`: {response=}"
+            )
             request = await middleware.process_response(response=response)
+            log.debug(
+                f"`{middleware.__class__.__name__}` middleware "
+                f"return value is {request=!r} for response: {response=}`"
+            )
             if request is not None:
                 if isinstance(request, Request):
                     return request
                 else:
+                    log.info(
+                        f"Invalid value was returned by response "
+                        f"middleware: `{middleware.__class__.__name__}`"
+                    )
                     raise TypeError(
                         "Response processing middleware must return "
                         "either `Request` or `None` not `%s`"
@@ -60,25 +89,41 @@ class BaseDownloader(ABC):
                     )
 
     def send_request(self, request: "Request") -> typing.AsyncGenerator[Response, None]:
+        log.debug(f"Sending the standard request: {request.id=}")
         return send_request(request=request)
 
     async def _process_request_with_middlewares(
         self, request: "Request"
     ) -> typing.Optional[CLEANUP_WITH_RESPONSE]:
+        log.debug(f"Processing the request: {request.id=}")
+        log.debug(f"Building the middlewares: {request.id=}")
         middlewares = [middleware() for middleware in self.middleware_classes]
+        log.debug(f"Middlewares: {middlewares}: {request.id=}")
         try:
             cleanup_and_response = await self._send_request_via_middlewares(
                 request=request, middlewares=middlewares
             )
+            log.debug(f"Request middlewares was processed for request: {request.id=}")
             if cleanup_and_response is None:
                 clean_up = self.send_request(request=request)
                 response = await clean_up.__anext__()
             else:
+                log.debug(
+                    f"Request middlewares was explicit "
+                    f"returned the response: {request.id=}"
+                )
                 clean_up, response = cleanup_and_response
+            log.debug(
+                f"Sending the response through the "
+                f"middlewares: {response=} {request.id=}"
+            )
             next_request = await self._send_response_via_middlewares(
                 response=response, middlewares=middlewares
             )
+            log.debug(f"Response middlewares was processed for request: {request.id=}")
             if next_request is not None:
+                log.debug("Response middlewares was explicit returned the new request")
+                log.debug(f"Processing the new request explicit: {request.id=}")
                 await clean_up_response(clean_up)
                 return await self._process_request_with_middlewares(
                     request=next_request
@@ -136,6 +181,7 @@ class SessionDownloader(BaseDownloader):
         return await self._process_request_with_middlewares(request=request)
 
     def send_request(self, request: "Request") -> typing.AsyncGenerator[Response, None]:
+        log.debug(f"Sending the request with the session: {request=} {self.session=}")
         return send_request_with_session(session=self.session, request=request)
 
 
@@ -198,6 +244,7 @@ async def send_request_with_session(
 
 
 async def send_request(request: "Request") -> typing.AsyncGenerator[Response, None]:
+    log.debug(f"Creating the AsyncClient for the request: {request.id=}")
     async with httpx.AsyncClient(
         cookies=request.cookies,
         proxies=request.proxies,
@@ -210,7 +257,9 @@ async def send_request(request: "Request") -> typing.AsyncGenerator[Response, No
         base_url=request.base_url,
         app=request.app,
     ) as session:
+        log.debug(f"Async client was created: AsyncClient={session}")
         if request.stream:
+            log.debug(f"Sending the stream request: {request=}")
             async with session.stream(
                 method=request.method,
                 url=request.url,
@@ -223,17 +272,22 @@ async def send_request(request: "Request") -> typing.AsyncGenerator[Response, No
                 auth=USE_CLIENT_DEFAULT,
                 follow_redirects=request.follow_redirects,
             ) as response:
+                log.debug("Stream response received, yielding the response")
                 yield response
-        response = await session.request(
-            method=request.method,
-            url=request.url,
-            content=request.content,
-            data=request.data,
-            files=request.files,
-            json=request.json,
-            params=request.params,
-            headers=request.headers,
-            auth=USE_CLIENT_DEFAULT,
-            follow_redirects=request.follow_redirects,
-        )
-        yield response
+            log.debug(f"Tear down streaming response for request: {request=}")
+        else:
+            log.debug(f"Sending the standard request: {request.id=}")
+            response = await session.request(
+                method=request.method,
+                url=request.url,
+                content=request.content,
+                data=request.data,
+                files=request.files,
+                json=request.json,
+                params=request.params,
+                headers=request.headers,
+                auth=USE_CLIENT_DEFAULT,
+                follow_redirects=request.follow_redirects,
+            )
+            log.debug("Standard response received, yielding the response")
+            yield response

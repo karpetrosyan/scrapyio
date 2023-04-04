@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import logging
 import typing
 from warnings import warn
 
@@ -14,6 +15,8 @@ from scrapyio.settings import load_settings
 from scrapyio.spider import BaseSpider
 from scrapyio.spider import Item
 from scrapyio.types import CLEANUP_WITH_RESPONSE
+
+log = logging.getLogger("scrapyio")
 
 
 class Engine:
@@ -122,6 +125,7 @@ class Engine:
                 await clean_up_response(gen)
 
     async def _tear_down(self):
+        log.info("Closing the opened loaders")
         if self.items_manager and self.items_manager.loaders:
             await asyncio.gather(
                 *(
