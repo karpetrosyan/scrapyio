@@ -22,7 +22,7 @@ class LoaderState(Enum):
 
 
 class BaseLoader(ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self.state: LoaderState = LoaderState.CREATED
 
     @abstractmethod

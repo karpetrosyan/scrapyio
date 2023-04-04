@@ -27,7 +27,7 @@ log = logging.getLogger("scrapyio")
 
 
 class BaseDownloader(ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self.middleware_classes: typing.List[
             typing.Type[BaseMiddleWare]
         ] = build_middlewares_chain()

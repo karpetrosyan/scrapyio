@@ -112,7 +112,7 @@ class Engine:
         ]
         await asyncio.gather(*tasks)
 
-    async def _run_once(self):
+    async def _run_once(self) -> None:
         responses = await self._send_all_requests_to_downloader()
         try:
             await self._handle_responses(responses=responses)
@@ -124,7 +124,7 @@ class Engine:
             for gen, response in responses:
                 await clean_up_response(gen)
 
-    async def _tear_down(self):
+    async def _tear_down(self) -> None:
         log.info("Closing the opened loaders")
         if self.items_manager and self.items_manager.loaders:
             await asyncio.gather(
@@ -141,7 +141,7 @@ class Engine:
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self._tear_down()
 
-    async def run(self):
+    async def run(self) -> None:
         try:
             while self.spider.requests:
                 await self._run_once()
