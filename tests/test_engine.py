@@ -153,7 +153,7 @@ async def test_engine_item_processing(app):
             )
 
     engine = Engine(spider_class=Spider, enable_settings=False)
-    await engine.run_once()
+    await engine._run_once()
     assert len(engine.spider.requests) == 1
     assert engine.spider.items == []
 
@@ -189,7 +189,7 @@ async def test_engine_with_item_manager(app):
     engine = Engine(
         spider_class=Spider, items_manager=ItemManager(), enable_settings=False
     )
-    await engine.run_once()
+    await engine._run_once()
     assert engine.spider.requests == []
 
 
@@ -239,3 +239,15 @@ def test_spider_string_start_requests():
     )
     assert spider.requests[0].url == "https://example.com"
     assert spider.requests[0].method == "GET"
+
+
+@pytest.mark.anyio
+async def test_engine_context_manager():
+    class Spider(BaseSpider):
+        start_requests = []
+
+        async def parse(self, response):
+            yield None  # pragma: no cover
+
+    async with Engine(spider_class=Spider, enable_settings=False):
+        ...

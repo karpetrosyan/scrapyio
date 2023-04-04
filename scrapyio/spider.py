@@ -6,10 +6,11 @@ from httpx._client import Response
 
 from .http import Request
 from .items import Item
+from .types import START_REQUESTS_TYPE
 
 
 class BaseSpider(ABC):
-    start_requests: typing.ClassVar[typing.List[typing.Union[Request, str]]] = []
+    start_requests: typing.ClassVar[START_REQUESTS_TYPE] = []
 
     def __init__(self):
         self.requests: typing.List[Request] = [

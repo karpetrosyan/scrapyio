@@ -70,4 +70,4 @@ def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
 
     item_manager = ItemManager(loaders=loaders)
     engine = Engine(spider_class=spider_class, items_manager=item_manager)
-    asyncio.run(engine.run_once())
+    asyncio.run(engine._run_once())

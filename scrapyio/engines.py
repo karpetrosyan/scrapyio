@@ -86,22 +86,19 @@ class Engine:
                 "Spider's `parse` must be an asynchronous generator function"
             )
         clean_up_generator, response = response_and_generator
-        try:
-            gen = self.spider.parse(response=response)
-            async for yielded_value in gen:
-                if isinstance(yielded_value, Request):
-                    self.spider.requests.append(yielded_value)
-                elif isinstance(yielded_value, Item):
-                    self.spider.items.append(yielded_value)  # pragma: no cover
-                elif yielded_value is None:
-                    ...
-                else:
-                    raise TypeError(
-                        "Invalid type yielded, expected `Request` or `Item` got `%s`"
-                        % yielded_value.__class__.__name__
-                    )
-        finally:
-            await clean_up_response(clean_up_generator)
+        gen = self.spider.parse(response=response)
+        async for yielded_value in gen:
+            if isinstance(yielded_value, Request):
+                self.spider.requests.append(yielded_value)
+            elif isinstance(yielded_value, Item):
+                self.spider.items.append(yielded_value)  # pragma: no cover
+            elif yielded_value is None:
+                ...
+            else:
+                raise TypeError(
+                    "Invalid type yielded, expected `Request` or `Item` got `%s`"
+                    % yielded_value.__class__.__name__
+                )
 
     async def _handle_responses(
         self, responses: typing.List[CLEANUP_WITH_RESPONSE]
@@ -112,13 +109,17 @@ class Engine:
         ]
         await asyncio.gather(*tasks)
 
-    async def run_once(self):
+    async def _run_once(self):
         responses = await self._send_all_requests_to_downloader()
-        await self._handle_responses(responses=responses)
-        if self.items_manager:
-            await self.items_manager.process_items(self.spider.items)
+        try:
+            await self._handle_responses(responses=responses)
+            if self.items_manager:
+                await self.items_manager.process_items(self.spider.items)
 
-        self.spider.items.clear()
+            self.spider.items.clear()
+        finally:
+            for gen, response in responses:
+                await clean_up_response(gen)
 
     async def _tear_down(self):
         if self.items_manager and self.items_manager.loaders:
@@ -130,12 +131,15 @@ class Engine:
                 )
             )
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        await self._tear_down()
+
     async def run(self):
         try:
             while self.spider.requests:
-                await self.run_once()
-        except (Exception, asyncio.CancelledError):
-            await self._tear_down()
-            raise
-        else:
+                await self._run_once()
+        finally:
             await self._tear_down()
