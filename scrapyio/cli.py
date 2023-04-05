@@ -1,49 +1,51 @@
-import asyncio
 import logging
 import typing
-from pathlib import Path
 
 import click
-
-from scrapyio import default_configs
-from scrapyio import spider_file_template
-from scrapyio.engines import Engine
-from scrapyio.exceptions import SpiderNotFound
-from scrapyio.item_loaders import BaseLoader
-from scrapyio.item_loaders import CSVLoader
-from scrapyio.item_loaders import JSONLoader
-from scrapyio.items import ItemManager
-from scrapyio.settings import SETTINGS_FILE_NAME
-from scrapyio.settings import SPIDERS_FILE_NAME
 
 log = logging.getLogger("scrapyio")
 
 
 @click.group()
-def main():
+def cli():
     ...
 
 
-@main.command()
+@cli.command()
 @click.argument("name")
 def new(name):
+    from pathlib import Path
+
+    from scrapyio.settings import SETTINGS_FILE_NAME
+    from scrapyio.settings import SPIDERS_FILE_NAME
+    from scrapyio.templates import configuration_template
+    from scrapyio.templates import spider_file_template
+
     path = Path.cwd()
     dir_path = path / name
     dir_path.mkdir()
     settings_file = dir_path / SETTINGS_FILE_NAME
     settings_file.touch()
-    settings_file.write_text(open(default_configs.__file__).read())
+    settings_file.write_text(open(configuration_template.__file__).read())
     spiders_file = dir_path / SPIDERS_FILE_NAME
     spiders_file.write_text(open(spider_file_template.__file__).read())
 
 
-@main.command()
+@cli.command()
 @click.argument("spider")
 @click.option("-j", "--json", type=str)
 @click.option("-c", "--csv", type=str)
 def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
+    import asyncio
     import os
     import sys
+
+    from scrapyio.engines import Engine
+    from scrapyio.exceptions import SpiderNotFound
+    from scrapyio.item_loaders import BaseLoader
+    from scrapyio.item_loaders import CSVLoader
+    from scrapyio.item_loaders import JSONLoader
+    from scrapyio.items import ItemManager
 
     log.info("Running the spider")
 
