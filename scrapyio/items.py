@@ -9,6 +9,8 @@ from warnings import warn
 
 from pydantic import BaseModel
 
+from scrapyio.item_loaders import ProxyLoader
+
 from . import default_configs
 from .exceptions import IgnoreItemError
 from .item_loaders import BaseLoader
@@ -65,8 +67,11 @@ class BaseItemsManager(ABC):
         self.middlewares = build_items_middlewares_chain()
         self.ignoring_callback = ignoring_callback
         self.success_callback = success_callback
-        self.loaders = loaders
 
+        if loaders:
+            self.loaders = [ProxyLoader(loader=loader) for loader in loaders]
+        else:
+            self.loaders = []
         if not loaders:
             warn(
                 "Nothing will be saved because no "
@@ -103,7 +108,7 @@ class BaseItemsManager(ABC):
         if self.loaders:
             for loader in self.loaders:
                 if loader.state == LoaderState.CREATED:
-                    await loader._open()
+                    await loader.open()
                 for item_to_load in filtered_items:
                     loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
         await asyncio.gather(*loading_tasks)

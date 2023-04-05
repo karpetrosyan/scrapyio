@@ -1,4 +1,5 @@
 import typing
+import warnings
 from abc import ABC
 from abc import abstractmethod
 from enum import Enum
@@ -22,9 +23,6 @@ class LoaderState(Enum):
 
 
 class BaseLoader(ABC):
-    def __init__(self) -> None:
-        self.state: LoaderState = LoaderState.CREATED
-
     @abstractmethod
     async def open(self) -> None:
         ...
@@ -37,14 +35,42 @@ class BaseLoader(ABC):
     async def close(self) -> None:
         ...
 
-    async def _open(self, *args, **kwargs) -> None:
-        log.info(f"Setting up the `{self.__class__.__name__}`")
-        self.state = LoaderState.OPENED
-        await self.open(*args, **kwargs)
 
-    async def _close(self, *args, **kwargs) -> None:
+class ProxyLoader:
+    def __init__(self, loader: BaseLoader):
+        self.state: LoaderState = LoaderState.CREATED
+        self.loader = loader
+
+    async def open(self) -> None:
+        if self.state == LoaderState.OPENED:
+            raise RuntimeError("Cannot open a loader that has already been opened.")
+        elif self.state == LoaderState.CLOSED:
+            raise RuntimeError(
+                "It is not possible to reopen a loader that has already been closed."
+            )
+        elif self.state == LoaderState.CREATED:
+            log.info(f"Setting up the `{self.__class__.__name__}`")
+            self.state = LoaderState.OPENED
+            await self.loader.open()
+
+    async def dump(self, item: "Item") -> None:
+        if self.state == LoaderState.CLOSED:
+            raise RuntimeError(
+                "It is not possible to dump a pydantic "
+                "object after the loader has been closed."
+            )
+        else:
+            await self.loader.dump(item=item)
+
+    async def close(self) -> None:
+        if self.state == LoaderState.CLOSED:
+            raise RuntimeError("Loader cannot be closed because it is already closed.")
+        elif self.state == LoaderState.OPENED:
+            msg = "Closing the loader without dumping items"
+            log.warning("Closing the loader without dumping items")
+            warnings.warn(category=RuntimeWarning, message=msg)
         log.info(f"Closing the `{self.__class__.__name__}`")
-        await self.close(*args, **kwargs)
+        await self.loader.close()
         self.state = LoaderState.CLOSED
 
 
