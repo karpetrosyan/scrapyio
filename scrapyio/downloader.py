@@ -15,12 +15,12 @@ from httpx._types import VerifyTypes
 
 from scrapyio.utils import first_not_none
 
-from . import default_configs
 from .exceptions import IgnoreRequestError
 from .http import Request
 from .http import clean_up_response
 from .middlewares import BaseMiddleWare
 from .middlewares import build_middlewares_chain
+from .settings import CONFIGS
 from .types import CLEANUP_WITH_RESPONSE
 
 log = logging.getLogger("scrapyio")
@@ -200,14 +200,14 @@ def create_default_session(
     return httpx.AsyncClient(
         app=app,
         base_url=base_url,
-        cookies=first_not_none(cookies, default_configs.DEFAULT_COOKIES),
-        proxies=first_not_none(proxies, default_configs.DEFAULT_PROXIES),
-        cert=first_not_none(cert, default_configs.DEFAULT_CERTS),
-        verify=first_not_none(verify, default_configs.DEFAULT_VERIFY_SSL),
-        timeout=first_not_none(timeout, default_configs.REQUEST_TIMEOUT),
-        trust_env=first_not_none(trust_env, default_configs.DEFAULT_TRUST_ENV),
-        http1=first_not_none(http1, default_configs.HTTP_1),
-        http2=first_not_none(http2, default_configs.HTTP_2),
+        cookies=first_not_none(cookies, CONFIGS.DEFAULT_COOKIES),
+        proxies=first_not_none(proxies, CONFIGS.DEFAULT_PROXIES),
+        cert=first_not_none(cert, CONFIGS.DEFAULT_CERTS),
+        verify=first_not_none(verify, CONFIGS.DEFAULT_VERIFY_SSL),
+        timeout=first_not_none(timeout, CONFIGS.REQUEST_TIMEOUT),
+        trust_env=first_not_none(trust_env, CONFIGS.DEFAULT_TRUST_ENV),
+        http1=first_not_none(http1, CONFIGS.HTTP_1),
+        http2=first_not_none(http2, CONFIGS.HTTP_2),
     )
 
 
