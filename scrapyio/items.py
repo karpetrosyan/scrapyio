@@ -9,8 +9,8 @@ from warnings import warn
 
 from pydantic import BaseModel
 
-
 from scrapyio.item_loaders import ProxyLoader
+
 from .exceptions import IgnoreItemError
 from .item_loaders import BaseLoader
 from .item_loaders import LoaderState

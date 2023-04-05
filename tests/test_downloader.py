@@ -1,21 +1,21 @@
 import inspect
 from contextlib import suppress
+from functools import partial
 
 import httpx
 import pytest
 from httpx import Response
 from httpx._exceptions import ResponseNotRead
 
-from functools import partial
 from scrapyio import Request
 from scrapyio.downloader import Downloader
 from scrapyio.downloader import SessionDownloader
 from scrapyio.downloader import create_default_session
-from scrapyio.downloader import send_request_with_session
 from scrapyio.downloader import send_request
+from scrapyio.downloader import send_request_with_session
+from scrapyio.exceptions import IgnoreRequestError
 from scrapyio.middlewares import BaseMiddleWare
 from scrapyio.settings import CONFIGS
-from scrapyio.exceptions import IgnoreRequestError
 
 
 class CustomMiddleWare(BaseMiddleWare):
@@ -58,7 +58,6 @@ class ExplicitReturnMiddleWare(BaseMiddleWare):
 
 
 class ExplicitResponseMiddleWare(ExplicitReturnMiddleWare):
-
     async def process_request(self, request):
         ...
 
@@ -249,8 +248,9 @@ async def test_invalid_explicit_return(mocked_request):
 @pytest.mark.anyio
 async def test_stream_request_with_session(app):
     req = Request(url="/", method="GET", stream=True)
-    async with httpx.AsyncClient(base_url="https://scrapyio-example.com",
-                                 app=app) as client:
+    async with httpx.AsyncClient(
+        base_url="https://scrapyio-example.com", app=app
+    ) as client:
         gen = send_request_with_session(client, req)
         try:
             resp = await gen.__anext__()
@@ -266,8 +266,9 @@ async def test_stream_request_with_session(app):
 @pytest.mark.anyio
 async def test_standard_request_with_session(app):
     req = Request(url="/", method="GET")
-    async with httpx.AsyncClient(base_url="https://scrapyio-example.com",
-                                 app=app) as client:
+    async with httpx.AsyncClient(
+        base_url="https://scrapyio-example.com", app=app
+    ) as client:
         gen = send_request_with_session(client, req)
         try:
             resp = await gen.__anext__()
@@ -326,8 +327,8 @@ async def test_downloader_request_processing(mocked_request):
 
 @pytest.mark.anyio
 async def test_downloader_request_processing_with_explicit_request(
-        mocked_request,
-        monkeypatch):
+    mocked_request, monkeypatch
+):
     req = mocked_request(url="/")
     downloader = Downloader()
     mocked_md = partial(ExplicitReturnMiddleWare, mocked_request)
@@ -342,8 +343,8 @@ async def test_downloader_request_processing_with_explicit_request(
 
 @pytest.mark.anyio
 async def test_downloader_request_processing_with_explicit_response(
-        mocked_request,
-        monkeypatch):
+    mocked_request, monkeypatch
+):
     req = mocked_request(url="/")
     downloader = Downloader()
     mocked_md = partial(ExplicitResponseMiddleWare, mocked_request)
@@ -357,8 +358,7 @@ async def test_downloader_request_processing_with_explicit_response(
 
 
 @pytest.mark.anyio
-async def test_downloader_request_processing_ignore_request(
-        mocked_request):
+async def test_downloader_request_processing_ignore_request(mocked_request):
     req = mocked_request(url="/")
 
     downloader = Downloader()

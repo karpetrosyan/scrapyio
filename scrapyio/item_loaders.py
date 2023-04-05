@@ -19,6 +19,7 @@ log = logging.getLogger("scrapyio")
 class LoaderState(Enum):
     CREATED = auto()
     OPENED = auto()
+    DUMPING = auto()
     CLOSED = auto()
 
 
@@ -60,11 +61,16 @@ class ProxyLoader:
                 "object after the loader has been closed."
             )
         else:
+            self.state = LoaderState.DUMPING
             await self.loader.dump(item=item)
 
     async def close(self) -> None:
         if self.state == LoaderState.CLOSED:
             raise RuntimeError("Loader cannot be closed because it is already closed.")
+        elif self.state == LoaderState.CREATED:
+            raise RuntimeError(
+                "The loader cannot be closed because it has not yet been opened."
+            )
         elif self.state == LoaderState.OPENED:
             msg = "Closing the loader without dumping items"
             log.warning("Closing the loader without dumping items")
