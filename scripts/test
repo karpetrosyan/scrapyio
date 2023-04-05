@@ -3,8 +3,5 @@
 set -x
 
 ./scripts/check
-
-
-coverage run -m pytest $@
-
+./scripts/pytest
 ./scripts/coverage

@@ -9,10 +9,10 @@ from warnings import warn
 
 from pydantic import BaseModel
 
-from . import default_configs
 from .exceptions import IgnoreItemError
 from .item_loaders import BaseLoader
 from .item_loaders import LoaderState
+from .settings import CONFIGS
 from .types import ITEM_ADDED_CALLBACK_TYPE
 from .types import ITEM_IGNORING_CALLBACK_TYPE
 from .utils import load_module
@@ -24,7 +24,7 @@ if typing.TYPE_CHECKING:
 def build_items_middlewares_chain() -> typing.Sequence["BaseItemMiddleWare"]:
     return [
         typing.cast("BaseItemMiddleWare", load_module(middleware)())
-        for middleware in default_configs.ITEM_MIDDLEWARES
+        for middleware in CONFIGS.ITEM_MIDDLEWARES
     ]
 
 
