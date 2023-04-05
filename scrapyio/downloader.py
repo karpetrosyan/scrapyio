@@ -224,23 +224,24 @@ async def send_request_with_session(
             json=request.json,
             params=request.params,
             headers=request.headers,
-            auth=USE_CLIENT_DEFAULT,
+            auth=request.auth or USE_CLIENT_DEFAULT,
             follow_redirects=request.follow_redirects,
         ) as response:
             yield response
-    response = await session.request(
-        method=request.method,
-        url=request.url,
-        content=request.content,
-        data=request.data,
-        files=request.files,
-        json=request.json,
-        params=request.params,
-        headers=request.headers,
-        auth=USE_CLIENT_DEFAULT,
-        follow_redirects=request.follow_redirects,
-    )
-    yield response
+    else:
+        response = await session.request(
+            method=request.method,
+            url=request.url,
+            content=request.content,
+            data=request.data,
+            files=request.files,
+            json=request.json,
+            params=request.params,
+            headers=request.headers,
+            auth=request.auth or USE_CLIENT_DEFAULT,
+            follow_redirects=request.follow_redirects,
+        )
+        yield response
 
 
 async def send_request(request: "Request") -> typing.AsyncGenerator[Response, None]:
