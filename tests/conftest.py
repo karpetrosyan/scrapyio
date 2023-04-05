@@ -1,9 +1,9 @@
 import sys
+import typing
 
 import pytest
+
 from scrapyio.http import Request
-from functools import wraps
-import typing
 
 P = typing.ParamSpec("P")
 
@@ -26,6 +26,7 @@ def clear_sys_modules():
 @pytest.fixture(scope="session")
 def app():
     from tests.server import app
+
     return app
 
 

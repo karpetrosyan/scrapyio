@@ -1,13 +1,15 @@
+import inspect
+from contextlib import suppress
+
 import httpx
-from scrapyio.downloader import send_request
+import pytest
 from httpx import Response
 from httpx._exceptions import ResponseNotRead
-from contextlib import suppress
-import pytest
-from scrapyio.downloader import create_default_session
-import inspect
-from scrapyio.settings import CONFIGS
+
 from scrapyio.downloader import Downloader
+from scrapyio.downloader import create_default_session
+from scrapyio.downloader import send_request
+from scrapyio.settings import CONFIGS
 
 
 @pytest.mark.anyio
@@ -44,7 +46,7 @@ async def test_downloader_send_request_stream(mocked_request):
 def test_default_session_creation():
     session = create_default_session(
         app=None,
-        base_url='',
+        base_url="",
         cookies=None,
         proxies=None,
         verify=None,
@@ -52,7 +54,7 @@ def test_default_session_creation():
         http1=None,
         http2=None,
         timeout=None,
-        trust_env=None
+        trust_env=None,
     )
 
     assert isinstance(session, httpx.AsyncClient)
@@ -64,7 +66,7 @@ def test_default_session_creation_configs(monkeypatch):
     monkeypatch.setattr(CONFIGS, "DEFAULT_TRUST_ENV", False)
     session = create_default_session(
         app=None,
-        base_url='',
+        base_url="",
         cookies=None,
         proxies=None,
         verify=None,
@@ -72,7 +74,7 @@ def test_default_session_creation_configs(monkeypatch):
         http1=None,
         http2=None,
         timeout=None,
-        trust_env=None
+        trust_env=None,
     )
     assert session.cookies == {"...": "..."}
     assert not session.trust_env

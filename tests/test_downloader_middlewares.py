@@ -1,8 +1,9 @@
+import pytest
+from httpx._exceptions import HTTPStatusError
+
+from scrapyio.middlewares import ProxyMiddleWare
 from scrapyio.middlewares import build_middlewares_chain
 from scrapyio.settings import CONFIGS
-from scrapyio.middlewares import ProxyMiddleWare
-from httpx._exceptions import HTTPStatusError
-import pytest
 
 
 def do_not_raise_status(*a, **kw):
@@ -16,7 +17,7 @@ def do_raise_status(*a, **kw):
 def test_build_middleware_chain(monkeypatch):
     new_middlewares = [
         "scrapyio.middlewares.ProxyMiddleWare",
-        "scrapyio.middlewares.ProxyMiddleWare"
+        "scrapyio.middlewares.ProxyMiddleWare",
     ]
     monkeypatch.setattr(CONFIGS, "MIDDLEWARES", new_middlewares)
     middleware_chain = build_middlewares_chain()
@@ -36,8 +37,9 @@ async def test_proxy_middleware_request_processing_without_proxy(mocked_request)
 
 
 @pytest.mark.anyio
-async def test_proxy_middleware_request_processing_with_proxy(mocked_request,
-                                                              monkeypatch):
+async def test_proxy_middleware_request_processing_with_proxy(
+    mocked_request, monkeypatch
+):
     req = mocked_request(url="/")
     monkeypatch.setattr(CONFIGS, "PROXY_CHAIN", ["https://scrapyio-example.com"])
     proxy = ProxyMiddleWare()
@@ -51,7 +53,7 @@ async def test_proxy_middleware_request_processing_with_proxy(mocked_request,
 async def test_proxy_middleware_exception_response_processing():
     proxy = ProxyMiddleWare()
 
-    response = type('test', (), {"raise_for_status": do_not_raise_status})
+    response = type("test", (), {"raise_for_status": do_not_raise_status})
 
     assert await proxy.process_response(response=response) is None
 
@@ -60,18 +62,23 @@ async def test_proxy_middleware_exception_response_processing():
 async def test_proxy_middleware_success_response_processing_without_proxy():
     proxy = ProxyMiddleWare()
 
-    response = type('test', (), {"raise_for_status": do_raise_status})
+    response = type("test", (), {"raise_for_status": do_raise_status})
     assert await proxy.process_response(response=response) is None
 
 
 @pytest.mark.anyio
-async def test_proxy_middleware_success_response_processing_with_proxy(mocked_request,
-                                                                       monkeypatch):
+async def test_proxy_middleware_success_response_processing_with_proxy(
+    mocked_request, monkeypatch
+):
     req = mocked_request(url="/")
-    monkeypatch.setattr(CONFIGS, "PROXY_CHAIN", ["https://scrapyio-example.com", "https://scrapyio-example.com"])
+    monkeypatch.setattr(
+        CONFIGS,
+        "PROXY_CHAIN",
+        ["https://scrapyio-example.com", "https://scrapyio-example.com"],
+    )
     proxy = ProxyMiddleWare()
 
-    response = type('test', (), {"raise_for_status": do_raise_status})
+    response = type("test", (), {"raise_for_status": do_raise_status})
 
     with pytest.raises(AssertionError):
         assert await proxy.process_response(response=response) is None
