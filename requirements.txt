@@ -1,4 +1,5 @@
 .[orjson]
+.[sqlite]
 
 # packaging
 hatch==1.6.3

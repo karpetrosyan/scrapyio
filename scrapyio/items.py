@@ -106,12 +106,27 @@ class BaseItemsManager(ABC):
         ]
         loading_tasks: typing.List[Task] = []
         if self.loaders:
+            await asyncio.gather(
+                *(
+                    loader.open()
+                    for loader in self.loaders
+                    if loader.state == LoaderState.CREATED
+                ),
+            )
             for loader in self.loaders:
-                if loader.state == LoaderState.CREATED:
-                    await loader.open()
                 for item_to_load in filtered_items:
                     loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
-        await asyncio.gather(*loading_tasks)
+        await asyncio.gather(*loading_tasks, return_exceptions=True)
+        # To ensure that all dumping tasks are closed when
+        # the `_tear_down` method is called, the gather method
+        # should be called with return_exception=False.
+
+        # If return_exception is set to True, after a single
+        # dumping task exception, `_tear_down` will be called,
+        # which will close the loader and release the
+        # resources, preventing dumping tasks from being processed.
+
+        # TODO: implement dump_exception_callback
         return typing.cast(typing.List[Item], filtered_items)
 
     @abstractmethod

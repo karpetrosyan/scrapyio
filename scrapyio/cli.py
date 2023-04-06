@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import typing
 
@@ -35,8 +36,13 @@ def new(name):
 @click.argument("spider")
 @click.option("-j", "--json", type=str)
 @click.option("-c", "--csv", type=str)
-def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
-    import asyncio
+@click.option("-s", "--sql", type=str)
+def run(
+    spider: str,
+    json: typing.Optional[str],
+    csv: typing.Optional[str],
+    sql: typing.Optional[str],
+):
     import os
     import sys
 
@@ -45,6 +51,7 @@ def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
     from scrapyio.item_loaders import BaseLoader
     from scrapyio.item_loaders import CSVLoader
     from scrapyio.item_loaders import JSONLoader
+    from scrapyio.item_loaders import SQLAlchemyLoader
     from scrapyio.items import ItemManager
 
     log.info("Running the spider")
@@ -79,6 +86,11 @@ def run(spider: str, json: typing.Optional[str], csv: typing.Optional[str]):
     if csv is not None:
         log.debug("Creating the CSV loader")
         loader = CSVLoader(filename=csv)
+        loaders.append(loader)
+
+    if sql is not None:
+        log.debug("Creating the SQL loader")
+        loader = SQLAlchemyLoader(url=sql)
         loaders.append(loader)
 
     item_manager = ItemManager(loaders=loaders)

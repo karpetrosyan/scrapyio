@@ -1,5 +1,7 @@
+import datetime
 import tempfile
 import warnings
+from pathlib import Path
 
 import pytest
 from pydantic import BaseModel
@@ -9,6 +11,7 @@ from scrapyio.item_loaders import CSVLoader
 from scrapyio.item_loaders import JSONLoader
 from scrapyio.item_loaders import LoaderState
 from scrapyio.item_loaders import ProxyLoader
+from scrapyio.item_loaders import SQLAlchemyLoader
 from scrapyio.items import Item
 
 
@@ -271,3 +274,94 @@ async def test_proxy_loader_closing_opened():
         await proxy_loader.close()
         assert len(w) == 1
         assert w[0].category == RuntimeWarning
+
+
+@pytest.mark.anyio
+async def test_sql_loader_open():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        path = Path(temp_dir) / "data.db"
+        loader = SQLAlchemyLoader(url="sqlite+aiosqlite:///" + str(path))
+        try:
+            await loader.open()
+        finally:
+            await loader.conn.close()
+            await loader.engine.dispose()
+            assert path.is_file()
+
+
+@pytest.mark.anyio
+async def test_sql_loader_dumping():
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        path = Path(temp_dir) / "data.db"
+        loader = SQLAlchemyLoader(url="sqlite+aiosqlite:///" + str(path))
+
+        try:
+            loader.engine = create_async_engine(url=loader.url)
+            loader.conn = await loader.engine.connect()
+            await loader.dump(TestItem(best_scraping_library="scrapyio"))
+        finally:
+            await loader.engine.dispose()
+            await loader.conn.close()
+
+
+@pytest.mark.anyio
+async def test_sql_loader_close():
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        path = Path(temp_dir) / "data.db"
+        loader = SQLAlchemyLoader(url="sqlite+aiosqlite:///" + str(path))
+        try:
+            loader.engine = create_async_engine(url=loader.url)
+            loader.conn = await loader.engine.connect()
+        finally:
+            await loader.close()
+
+
+@pytest.mark.anyio
+async def test_sqlalchemy_fields_mapper():
+    class MyItem(Item):
+        a: int
+        b: float
+        c: str
+        d: datetime.datetime
+
+    item = MyItem(a=1, b=1.1, c="1.1", d=datetime.datetime.now())
+    mapped_fields = await SQLAlchemyLoader._get_mapped_fields(
+        SQLAlchemyLoader, item=item
+    )
+    mapped_a, mapped_b, mapped_c, mapped_d = mapped_fields
+    from sqlalchemy import DateTime
+    from sqlalchemy import Float
+    from sqlalchemy import Integer
+    from sqlalchemy import String
+
+    assert mapped_a.type.__class__ == Integer
+    assert mapped_b.type.__class__ == Float
+    assert mapped_c.type.__class__ == String
+    assert mapped_d.type.__class__ == DateTime
+
+
+@pytest.mark.anyio
+async def test_sqlalchemy_table_creation(monkeypatch):
+    from sqlalchemy import Table
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    with tempfile.TemporaryDirectory() as path:
+        monkeypatch.syspath_prepend(path=path)
+        loader = SQLAlchemyLoader(
+            url="sqlite+aiosqlite:///" + str(Path(path) / "data.db")
+        )
+        try:
+            loader.engine = create_async_engine(url=loader.url)
+
+            class MyItem(Item):
+                a: int
+
+            await loader._create_table_from_item(MyItem(a=1))
+            assert len(loader.existing_tables) == 1
+            assert isinstance(loader.existing_tables["MyItem"], Table)
+        finally:
+            await loader.engine.dispose()

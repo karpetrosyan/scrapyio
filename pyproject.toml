@@ -34,6 +34,11 @@ orjson = [
   "orjson==3.8.9",
 ]
 
+sqlite = [
+  "SQLAlchemy==2.0.8",
+  "aiosqlite==0.18.0"
+]
+
 [project.urls]
 Documentation = "https://github.com/karosis88/scrapyio#readme"
 Issues = "https://github.com/karosis88/scrapyio/issues"

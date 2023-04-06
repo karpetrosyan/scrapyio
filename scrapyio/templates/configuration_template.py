@@ -62,7 +62,7 @@ DEFAULT_LOGGING_CONFIG: typing.Dict = {
         "scrapyio-stream": {
             "class": "logging.StreamHandler",
             "formatter": "standard",
-            "level": "INFO",
+            "level": "DEBUG",
             "stream": "ext://sys.stderr",
         },
     },
