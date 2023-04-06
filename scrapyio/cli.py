@@ -53,7 +53,6 @@ def run(
 
     log.info("Running the spider")
 
-
     try:
         log.debug("Trying to import spiders file")
         import spiders  # type: ignore[import]

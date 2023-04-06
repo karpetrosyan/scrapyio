@@ -9,7 +9,6 @@ from scrapyio.downloader import BaseDownloader
 from scrapyio.downloader import Downloader
 from scrapyio.http import clean_up_response
 from scrapyio.item_loaders import BaseLoader
-from scrapyio.item_loaders import LoaderState
 from scrapyio.items import ItemManager
 from scrapyio.spider import BaseSpider
 from scrapyio.spider import Item
@@ -125,8 +124,9 @@ class Engine:
                 await clean_up_response(gen)
 
     async def _tear_down(self) -> None:
-        log.info(f"Closing the opened loaders: {self.items_manager.loaders=}")
+        log.debug("Tear down was called")
         if self.items_manager and self.items_manager.loaders:
+            log.info(f"Closing the opened loaders: {self.items_manager.loaders=}")
             for loader in self.items_manager.loaders:
                 await loader.close()
 
