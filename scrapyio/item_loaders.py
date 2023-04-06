@@ -49,6 +49,8 @@ class ProxyLoader:
             raise RuntimeError(
                 "It is not possible to reopen a loader that has already been closed."
             )
+        elif self.state == LoaderState.DUMPING:
+            raise RuntimeError("Cannot open a loader that is already in the dumping state.")
         elif self.state == LoaderState.CREATED:
             log.info(f"Setting up the `{self.__class__.__name__}`")
             self.state = LoaderState.OPENED
@@ -59,6 +61,10 @@ class ProxyLoader:
             raise RuntimeError(
                 "It is not possible to dump a pydantic "
                 "object after the loader has been closed."
+            )
+        elif self.state == LoaderState.CREATED:
+            raise RuntimeError(
+                "The newly created loader cannot dump an object; it must be opened."
             )
         else:
             self.state = LoaderState.DUMPING
@@ -92,7 +98,7 @@ class JSONLoader(BaseLoader):
         self.file.write("[\n")
 
     async def dump(self, item: "Item") -> None:
-        assert self.file, "Loader's `dump` was called before `open` method"
+        assert self.file
         serialized_item = item.json()
         if not self.first_item:
             self.file.write(",\n" + serialized_item)
@@ -101,7 +107,7 @@ class JSONLoader(BaseLoader):
             self.first_item = False
 
     async def close(self) -> None:
-        assert self.file, "Loader's `close` was called before `open` method"
+        assert self.file
         self.file.write("\n]")
         self.file.close()
 
@@ -118,7 +124,7 @@ class CSVLoader(BaseLoader):
         self.file = open(self.filename, "w", encoding="utf-8")
 
     async def dump(self, item: "Item") -> None:
-        assert self.file, "Loader's `dump` was called before `open` method"
+        assert self.file
         if self.first_item:
             self.first_item = False
             fieldnames = list(item.__class__.schema()["properties"].keys())
@@ -129,7 +135,7 @@ class CSVLoader(BaseLoader):
         self.writer.writerow(item.dict())
 
     async def close(self) -> None:
-        assert self.file, "Loader's `close` was called before `open` method"
+        assert self.file
         self.file.close()
 
 
