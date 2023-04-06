@@ -28,3 +28,4 @@ ignore_errors = True
 omit =
     tmp*.py
     scrapyio/templates/*
+    scrapyio/cli.py

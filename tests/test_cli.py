@@ -2,8 +2,7 @@
 This module contains the scrapyio 'cli' unit tests.
 These tests ensure that the cli commands work as expected.
 """
-
-
+import os
 import tempfile
 from pathlib import Path
 
@@ -45,3 +44,5 @@ def test_scrapyio_new_command_without_name():
         with runner.isolated_filesystem(temp_dir=temp_dir):
             result = runner.invoke(cli, ["new"])
             assert result.exception
+
+# TODO: add integration tests for scrapyio run command
