@@ -1,11 +1,8 @@
 import sys
-import typing
 
 import pytest
 
 from scrapyio.http import Request
-
-P = typing.ParamSpec("P")
 
 
 @pytest.fixture()
