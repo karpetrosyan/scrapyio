@@ -7,7 +7,9 @@ SETTINGS_FILE_NAME_FOR_IMPORT = "settings"
 SPIDERS_FILE_NAME = "spiders.py"
 SPIDERS_FILE_NAME_FOR_IMPORT = "spiders"
 try:
-    CONFIGS: ModuleType = __import__(SETTINGS_FILE_NAME)
+    import sys
+    sys.path.append('')
+    CONFIGS: ModuleType = __import__(SETTINGS_FILE_NAME_FOR_IMPORT)
 except ModuleNotFoundError:
     TESTING = bool(os.getenv("TESTING"))
     if not TESTING:

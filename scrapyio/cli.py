@@ -43,9 +43,6 @@ def run(
     csv: typing.Optional[str],
     sql: typing.Optional[str],
 ):
-    import os
-    import sys
-
     from scrapyio.engines import Engine
     from scrapyio.exceptions import SpiderNotFound
     from scrapyio.item_loaders import BaseLoader
@@ -56,7 +53,6 @@ def run(
 
     log.info("Running the spider")
 
-    sys.path.append(os.getcwd())
 
     try:
         log.debug("Trying to import spiders file")

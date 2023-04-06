@@ -58,6 +58,7 @@ class ProxyLoader:
         self.loader = loader
 
     async def open(self) -> None:
+        log.debug(f"Opening the {self.loader.__class__.__name__} loader")
         if self.state == LoaderState.OPENED:
             raise RuntimeError("Cannot open a loader that has already been opened.")
         elif self.state == LoaderState.CLOSED:
@@ -69,11 +70,12 @@ class ProxyLoader:
                 "Cannot open a loader that is already in the dumping state."
             )
         elif self.state == LoaderState.CREATED:
-            log.info(f"Setting up the `{self.__class__.__name__}`")
+            log.info(f"Setting up the `{self.loader.__class__.__name__}`")
             self.state = LoaderState.OPENED
             await self.loader.open()
 
     async def dump(self, item: "Item") -> None:
+        log.debug(f"Dumping in {self.loader.__class__.__name__}")
         if self.state == LoaderState.CLOSED:
             raise RuntimeError(
                 "It is not possible to dump a pydantic "
@@ -88,6 +90,7 @@ class ProxyLoader:
             await self.loader.dump(item=item)
 
     async def close(self) -> None:
+        log.debug(f"Closing {self.loader.__class__.__name__} loader")
         if self.state == LoaderState.CLOSED:
             raise RuntimeError("Loader cannot be closed because it is already closed.")
         elif self.state == LoaderState.CREATED:
@@ -98,9 +101,12 @@ class ProxyLoader:
             msg = "Closing the loader without dumping items"
             log.warning("Closing the loader without dumping items")
             warnings.warn(category=RuntimeWarning, message=msg)
-        log.info(f"Closing the `{self.__class__.__name__}`")
+        log.info(f"Closing the `{self.loader.__class__.__name__}`")
         await self.loader.close()
         self.state = LoaderState.CLOSED
+
+    def __repr__(self):
+        return f"<ProxyLoader {self.loader.__class__.__name__}>"
 
 
 class JSONLoader(BaseLoader):
@@ -216,8 +222,10 @@ class SQLAlchemyLoader(BaseLoader):
     async def close(self) -> None:
         assert self.conn
         await self.conn.commit()
+        log.debug("Closing the database connection")
         await self.conn.close()
         assert self.engine
+        log.debug("Disposing the database engine")
         await self.engine.dispose()
 
 

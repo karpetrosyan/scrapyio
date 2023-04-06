@@ -109,27 +109,26 @@ class Engine:
         await asyncio.gather(*tasks)
 
     async def _run_once(self) -> None:
+        log.debug("Running engine once")
         responses = await self._send_all_requests_to_downloader()
         try:
+            log.debug("Handling the responses")
             await self._handle_responses(responses=responses)
             if self.items_manager:
+                log.debug("Processing the items")
                 await self.items_manager.process_items(self.spider.items)
-
+            log.debug("Clear spider items after processing")
             self.spider.items.clear()
         finally:
             for gen, response in responses:
+                log.debug("Cleaning up the responses")
                 await clean_up_response(gen)
 
     async def _tear_down(self) -> None:
-        log.info("Closing the opened loaders")
+        log.info(f"Closing the opened loaders: {self.items_manager.loaders=}")
         if self.items_manager and self.items_manager.loaders:
-            await asyncio.gather(
-                *(
-                    loader.close()
-                    for loader in self.items_manager.loaders
-                    if loader.state == LoaderState.OPENED
-                )
-            )
+            for loader in self.items_manager.loaders:
+                await loader.close()
 
     async def __aenter__(self):
         return self
@@ -142,4 +141,5 @@ class Engine:
             while self.spider.requests:
                 await self._run_once()
         finally:
+            log.info("Calling thear down on engine")
             await self._tear_down()

@@ -84,7 +84,7 @@
   "area": 193.0
 },
 {
-  "name": "Åland",
+  "name": "\u00c5land",
   "population": 26711,
   "capital": "Mariehamn",
   "area": 1580.0
@@ -150,7 +150,7 @@
   "area": 112620.0
 },
 {
-  "name": "Saint Barthélemy",
+  "name": "Saint Barth\u00e9lemy",
   "population": 8450,
   "capital": "Gustavia",
   "area": 21.0
@@ -182,7 +182,7 @@
 {
   "name": "Brazil",
   "population": 201103330,
-  "capital": "Brasília",
+  "capital": "Bras\u00edlia",
   "area": 8511965.0
 },
 {
@@ -278,7 +278,7 @@
 {
   "name": "Cameroon",
   "population": 19294149,
-  "capital": "Yaoundé",
+  "capital": "Yaound\u00e9",
   "area": 475440.0
 },
 {
@@ -290,13 +290,13 @@
 {
   "name": "Colombia",
   "population": 47790000,
-  "capital": "Bogotá",
+  "capital": "Bogot\u00e1",
   "area": 1138910.0
 },
 {
   "name": "Costa Rica",
   "population": 4516220,
-  "capital": "San José",
+  "capital": "San Jos\u00e9",
   "area": 51100.0
 },
 {
@@ -392,7 +392,7 @@
 {
   "name": "Western Sahara",
   "population": 273008,
-  "capital": "Laâyoune / El Aaiún",
+  "capital": "La\u00e2youne / El Aai\u00fan",
   "area": 266000.0
 },
 {
@@ -440,7 +440,7 @@
 {
   "name": "Faroe Islands",
   "population": 48228,
-  "capital": "Tórshavn",
+  "capital": "T\u00f3rshavn",
   "area": 1399.0
 },
 {
@@ -548,7 +548,7 @@
 {
   "name": "Guam",
   "population": 159358,
-  "capital": "Hagåtña",
+  "capital": "Hag\u00e5t\u00f1a",
   "area": 549.0
 },
 {
@@ -830,7 +830,7 @@
 {
   "name": "Moldova",
   "population": 4324000,
-  "capital": "Chişinău",
+  "capital": "Chi\u015fin\u0103u",
   "area": 33843.0
 },
 {
@@ -926,7 +926,7 @@
 {
   "name": "Maldives",
   "population": 395650,
-  "capital": "Malé",
+  "capital": "Mal\u00e9",
   "area": 300.0
 },
 {
@@ -1112,7 +1112,7 @@
 {
   "name": "Paraguay",
   "population": 6375830,
-  "capital": "Asunción",
+  "capital": "Asunci\u00f3n",
   "area": 406750.0
 },
 {
@@ -1122,7 +1122,7 @@
   "area": 11437.0
 },
 {
-  "name": "Réunion",
+  "name": "R\u00e9union",
   "population": 776948,
   "capital": "Saint-Denis",
   "area": 2517.0
@@ -1248,9 +1248,9 @@
   "area": 644329.0
 },
 {
-  "name": "São Tomé and Príncipe",
+  "name": "S\u00e3o Tom\u00e9 and Pr\u00edncipe",
   "population": 175808,
-  "capital": "São Tomé",
+  "capital": "S\u00e3o Tom\u00e9",
   "area": 1001.0
 },
 {
@@ -1292,13 +1292,13 @@
 {
   "name": "French Southern Territories",
   "population": 140,
-  "capital": "Port-aux-Français",
+  "capital": "Port-aux-Fran\u00e7ais",
   "area": 7829.0
 },
 {
   "name": "Togo",
   "population": 6587239,
-  "capital": "Lomé",
+  "capital": "Lom\u00e9",
   "area": 56785.0
 },
 {

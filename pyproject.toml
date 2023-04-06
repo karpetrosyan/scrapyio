@@ -48,4 +48,4 @@ Source = "https://github.com/karosis88/scrapyio"
 path = "scrapyio/__about__.py"
 
 [project.scripts]
-scrapyio = "scrapyio.cli:main"
+scrapyio = "scrapyio.cli:cli"
