@@ -4,19 +4,17 @@ from abc import abstractmethod
 
 from httpx import HTTPStatusError
 
-from . import default_configs
 from .http import Request
 from .http import Response
+from .settings import CONFIGS
 from .types import CLEANUP_WITH_RESPONSE
 from .utils import load_module
 
 
 def build_middlewares_chain() -> typing.List[typing.Type["BaseMiddleWare"]]:
-    from . import default_configs
-
     return [
         typing.cast(typing.Type["BaseMiddleWare"], load_module(middleware))
-        for middleware in default_configs.MIDDLEWARES
+        for middleware in CONFIGS.MIDDLEWARES
     ]
 
 
@@ -35,7 +33,7 @@ class BaseMiddleWare(ABC):
 class ProxyMiddleWare(BaseMiddleWare):
     def __init__(self):
         self.next_middleware_index = 0
-        self.proxies = default_configs.PROXY_CHAIN[:]
+        self.proxies = CONFIGS.PROXY_CHAIN[:]
         self.last_request: typing.Optional[Request] = None
 
     async def process_request(

@@ -11,7 +11,6 @@ from scrapyio.http import clean_up_response
 from scrapyio.item_loaders import BaseLoader
 from scrapyio.item_loaders import LoaderState
 from scrapyio.items import ItemManager
-from scrapyio.settings import load_settings
 from scrapyio.spider import BaseSpider
 from scrapyio.spider import Item
 from scrapyio.types import CLEANUP_WITH_RESPONSE
@@ -31,11 +30,8 @@ class Engine:
         spider_class: typing.Type[BaseSpider],
         downloader: typing.Optional[BaseDownloader] = None,
         items_manager: typing.Optional[ItemManager] = None,
-        enable_settings: bool = True,
     ):
         self.spider = spider_class()
-        if enable_settings:
-            load_settings()  # pragma: no cover
 
         self.downloader: BaseDownloader
         if downloader is None:
@@ -129,7 +125,7 @@ class Engine:
         if self.items_manager and self.items_manager.loaders:
             await asyncio.gather(
                 *(
-                    loader._close()
+                    loader.close()
                     for loader in self.items_manager.loaders
                     if loader.state == LoaderState.OPENED
                 )

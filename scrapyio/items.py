@@ -9,10 +9,12 @@ from warnings import warn
 
 from pydantic import BaseModel
 
-from . import default_configs
+from scrapyio.item_loaders import ProxyLoader
+
 from .exceptions import IgnoreItemError
 from .item_loaders import BaseLoader
 from .item_loaders import LoaderState
+from .settings import CONFIGS
 from .types import ITEM_ADDED_CALLBACK_TYPE
 from .types import ITEM_IGNORING_CALLBACK_TYPE
 from .utils import load_module
@@ -24,7 +26,7 @@ if typing.TYPE_CHECKING:
 def build_items_middlewares_chain() -> typing.Sequence["BaseItemMiddleWare"]:
     return [
         typing.cast("BaseItemMiddleWare", load_module(middleware)())
-        for middleware in default_configs.ITEM_MIDDLEWARES
+        for middleware in CONFIGS.ITEM_MIDDLEWARES
     ]
 
 
@@ -65,8 +67,11 @@ class BaseItemsManager(ABC):
         self.middlewares = build_items_middlewares_chain()
         self.ignoring_callback = ignoring_callback
         self.success_callback = success_callback
-        self.loaders = loaders
 
+        if loaders:
+            self.loaders = [ProxyLoader(loader=loader) for loader in loaders]
+        else:
+            self.loaders = []
         if not loaders:
             warn(
                 "Nothing will be saved because no "
@@ -103,7 +108,7 @@ class BaseItemsManager(ABC):
         if self.loaders:
             for loader in self.loaders:
                 if loader.state == LoaderState.CREATED:
-                    await loader._open()
+                    await loader.open()
                 for item_to_load in filtered_items:
                     loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
         await asyncio.gather(*loading_tasks)

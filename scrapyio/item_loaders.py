@@ -1,4 +1,5 @@
 import typing
+import warnings
 from abc import ABC
 from abc import abstractmethod
 from enum import Enum
@@ -18,13 +19,11 @@ log = logging.getLogger("scrapyio")
 class LoaderState(Enum):
     CREATED = auto()
     OPENED = auto()
+    DUMPING = auto()
     CLOSED = auto()
 
 
 class BaseLoader(ABC):
-    def __init__(self) -> None:
-        self.state: LoaderState = LoaderState.CREATED
-
     @abstractmethod
     async def open(self) -> None:
         ...
@@ -37,14 +36,55 @@ class BaseLoader(ABC):
     async def close(self) -> None:
         ...
 
-    async def _open(self, *args, **kwargs) -> None:
-        log.info(f"Setting up the `{self.__class__.__name__}`")
-        self.state = LoaderState.OPENED
-        await self.open(*args, **kwargs)
 
-    async def _close(self, *args, **kwargs) -> None:
+class ProxyLoader:
+    def __init__(self, loader: BaseLoader):
+        self.state: LoaderState = LoaderState.CREATED
+        self.loader = loader
+
+    async def open(self) -> None:
+        if self.state == LoaderState.OPENED:
+            raise RuntimeError("Cannot open a loader that has already been opened.")
+        elif self.state == LoaderState.CLOSED:
+            raise RuntimeError(
+                "It is not possible to reopen a loader that has already been closed."
+            )
+        elif self.state == LoaderState.DUMPING:
+            raise RuntimeError(
+                "Cannot open a loader that is already in the dumping state."
+            )
+        elif self.state == LoaderState.CREATED:
+            log.info(f"Setting up the `{self.__class__.__name__}`")
+            self.state = LoaderState.OPENED
+            await self.loader.open()
+
+    async def dump(self, item: "Item") -> None:
+        if self.state == LoaderState.CLOSED:
+            raise RuntimeError(
+                "It is not possible to dump a pydantic "
+                "object after the loader has been closed."
+            )
+        elif self.state == LoaderState.CREATED:
+            raise RuntimeError(
+                "The newly created loader cannot dump an object; it must be opened."
+            )
+        else:
+            self.state = LoaderState.DUMPING
+            await self.loader.dump(item=item)
+
+    async def close(self) -> None:
+        if self.state == LoaderState.CLOSED:
+            raise RuntimeError("Loader cannot be closed because it is already closed.")
+        elif self.state == LoaderState.CREATED:
+            raise RuntimeError(
+                "The loader cannot be closed because it has not yet been opened."
+            )
+        elif self.state == LoaderState.OPENED:
+            msg = "Closing the loader without dumping items"
+            log.warning("Closing the loader without dumping items")
+            warnings.warn(category=RuntimeWarning, message=msg)
         log.info(f"Closing the `{self.__class__.__name__}`")
-        await self.close(*args, **kwargs)
+        await self.loader.close()
         self.state = LoaderState.CLOSED
 
 
@@ -60,7 +100,7 @@ class JSONLoader(BaseLoader):
         self.file.write("[\n")
 
     async def dump(self, item: "Item") -> None:
-        assert self.file, "Loader's `dump` was called before `open` method"
+        assert self.file
         serialized_item = item.json()
         if not self.first_item:
             self.file.write(",\n" + serialized_item)
@@ -69,7 +109,7 @@ class JSONLoader(BaseLoader):
             self.first_item = False
 
     async def close(self) -> None:
-        assert self.file, "Loader's `close` was called before `open` method"
+        assert self.file
         self.file.write("\n]")
         self.file.close()
 
@@ -86,7 +126,7 @@ class CSVLoader(BaseLoader):
         self.file = open(self.filename, "w", encoding="utf-8")
 
     async def dump(self, item: "Item") -> None:
-        assert self.file, "Loader's `dump` was called before `open` method"
+        assert self.file
         if self.first_item:
             self.first_item = False
             fieldnames = list(item.__class__.schema()["properties"].keys())
@@ -97,7 +137,7 @@ class CSVLoader(BaseLoader):
         self.writer.writerow(item.dict())
 
     async def close(self) -> None:
-        assert self.file, "Loader's `close` was called before `open` method"
+        assert self.file
         self.file.close()
 
 

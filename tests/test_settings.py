@@ -1,42 +1,20 @@
-import os
-from pathlib import Path
-from tempfile import NamedTemporaryFile
+"""
+This module contains scrapyio 'settings' tests
+and ensures that configuration file loading
+and scrapyio configurations work as expected.
+"""
 
-from scrapyio import default_configs
-from scrapyio import settings
-from scrapyio.settings import load_settings
-
-
-def test_load_settings(monkeypatch):
-    monkeypatch.setattr(settings, "LOADED", False)
-    saved_defaults = open(default_configs.__file__).read()
-
-    with NamedTemporaryFile(mode="w+", suffix=".py", dir=".", delete=False) as file:
-        path = Path(file.name)
-        import_name = path.name[:-3]  # without .py suffix
-        monkeypatch.syspath_prepend(path=path.parent)
-        file.write(saved_defaults)
-        file.flush()
-    try:
-        module = __import__(import_name)
-        module.REQUEST_TIMEOUT = 10
-        module.MIDDLEWARES = ["NOT A PATH"]
-        load_settings(import_name)
-        assert default_configs.REQUEST_TIMEOUT == 10
-        assert default_configs.MIDDLEWARES == ["NOT A PATH"]
-        module.REQUEST_TIMEOUT = 5
-        load_settings(import_name)
-        assert default_configs.REQUEST_TIMEOUT != 5
-    finally:
-        os.remove(path)
+import pytest
 
 
-def test_load_settings_without_file(monkeypatch):
-    assert not settings.LOADED
-    UNEXISTING_FILE_NAME = "NOTEXISTS"
-    UNEXISTING_FILE_NAME_FOR_IMPORT = "NOTEXISTS.py"
-    monkeypatch.setattr(settings, "SETTINGS_FILE_NAME", UNEXISTING_FILE_NAME)
-    monkeypatch.setattr(
-        settings, "SETTINGS_FILE_NAME_FOR_IMPORT", UNEXISTING_FILE_NAME_FOR_IMPORT
-    )
-    load_settings()
+def test_config_loading_without_test_env(monkeypatch, clear_sys_modules):
+    monkeypatch.delenv("TESTING")
+    with pytest.raises(ModuleNotFoundError):
+        __import__("scrapyio.settings")
+
+
+def test_config_loading_with_test_env(monkeypatch, clear_sys_modules):
+    monkeypatch.setenv("TESTING", "TRUE")
+    mod = __import__("scrapyio.settings")
+    CONFIGS = mod.settings.CONFIGS
+    assert CONFIGS.__name__ == "scrapyio.templates.configuration_template"
