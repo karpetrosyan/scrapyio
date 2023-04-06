@@ -50,7 +50,9 @@ class ProxyLoader:
                 "It is not possible to reopen a loader that has already been closed."
             )
         elif self.state == LoaderState.DUMPING:
-            raise RuntimeError("Cannot open a loader that is already in the dumping state.")
+            raise RuntimeError(
+                "Cannot open a loader that is already in the dumping state."
+            )
         elif self.state == LoaderState.CREATED:
             log.info(f"Setting up the `{self.__class__.__name__}`")
             self.state = LoaderState.OPENED

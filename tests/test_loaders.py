@@ -1,19 +1,18 @@
-import os
 import tempfile
 import warnings
 
 import pytest
-
-from scrapyio.item_loaders import BaseLoader
-from scrapyio.item_loaders import LoaderState
-from scrapyio.item_loaders import ProxyLoader
-from scrapyio.item_loaders import JSONLoader
-from scrapyio.item_loaders import CSVLoader
-from scrapyio.items import Item
 from pydantic import BaseModel
 
-class FakeLoader:
+from scrapyio.item_loaders import BaseLoader
+from scrapyio.item_loaders import CSVLoader
+from scrapyio.item_loaders import JSONLoader
+from scrapyio.item_loaders import LoaderState
+from scrapyio.item_loaders import ProxyLoader
+from scrapyio.items import Item
 
+
+class FakeLoader:
     async def open(self):
         ...
 
@@ -26,6 +25,7 @@ class FakeLoader:
 
 class TestItem(BaseModel):
     best_scraping_library: str
+
 
 class EmptyLoader(BaseLoader):
     async def open(self) -> None:
@@ -69,8 +69,8 @@ async def test_proxy_loader_dumping_created():
     assert proxy_loader.state == LoaderState.CREATED
 
     with pytest.raises(
-            RuntimeError,
-            match = r"The newly created loader cannot dump an object; it must be opened."
+        RuntimeError,
+        match=r"The newly created loader cannot dump an object; it must be opened.",
     ):
         await proxy_loader.dump(object())
 
@@ -81,10 +81,10 @@ async def test_proxy_loader_dumping_closed():
     assert proxy_loader.state == LoaderState.CREATED
     proxy_loader.state = LoaderState.CLOSED
 
-
     with pytest.raises(
-            RuntimeError,
-            match = r"It is not possible to dump a pydantic object after the loader has been closed."
+        RuntimeError,
+        match="It is not possible to dump a pydantic "
+        r"object after the loader has been closed.",
     ):
         await proxy_loader.dump(object())
 
@@ -95,12 +95,11 @@ async def test_proxy_loader_opening_already_opened():
     assert proxy_loader.state == LoaderState.CREATED
     proxy_loader.state = LoaderState.OPENED
 
-
     with pytest.raises(
-            RuntimeError,
-            match = r"Cannot open a loader that has already been opened."
+        RuntimeError, match=r"Cannot open a loader that has already been opened."
     ):
         await proxy_loader.open()
+
 
 @pytest.mark.anyio
 async def test_proxy_loader_opening_with_dumping_state():
@@ -108,10 +107,9 @@ async def test_proxy_loader_opening_with_dumping_state():
     assert proxy_loader.state == LoaderState.CREATED
     proxy_loader.state = LoaderState.DUMPING
 
-
     with pytest.raises(
-            RuntimeError,
-            match = r"Cannot open a loader that is already in the dumping state."
+        RuntimeError,
+        match=r"Cannot open a loader that is already in the dumping state.",
     ):
         await proxy_loader.open()
 
@@ -122,12 +120,12 @@ async def test_proxy_loader_opening_closed():
     assert proxy_loader.state == LoaderState.CREATED
     proxy_loader.state = LoaderState.CLOSED
 
-
     with pytest.raises(
-            RuntimeError,
-            match = r"It is not possible to reopen a loader that has already been closed."
+        RuntimeError,
+        match=r"It is not possible to reopen a loader that has already been closed.",
     ):
         await proxy_loader.open()
+
 
 @pytest.mark.anyio
 async def test_json_loader_open():
@@ -140,16 +138,18 @@ async def test_json_loader_open():
         with open(path, encoding="utf-8") as f:
             assert f.read() == "[\n"
 
+
 @pytest.mark.anyio
 async def test_json_loader_close():
     path = tempfile.mktemp()
     loader = JSONLoader(filename=path)
     try:
-        loader.file = open(path, 'w')
+        loader.file = open(path, "w")
     finally:
         await loader.close()
         with open(path, encoding="utf-8") as f:
             assert f.read() == "\n]"
+
 
 @pytest.mark.anyio
 async def test_json_loader_dump_first_item():
@@ -157,7 +157,7 @@ async def test_json_loader_dump_first_item():
     path = tempfile.mktemp()
     loader = JSONLoader(filename=path)
     try:
-        loader.file = open(path, 'w')
+        loader.file = open(path, "w")
         await loader.dump(item=item)
     finally:
         loader.file.close()
@@ -171,13 +171,14 @@ async def test_json_loader_dump_not_first_item():
     path = tempfile.mktemp()
     loader = JSONLoader(filename=path)
     try:
-        loader.file = open(path, 'w')
+        loader.file = open(path, "w")
         loader.first_item = False
         await loader.dump(item=item)
     finally:
         loader.file.close()
         with open(path, encoding="utf-8") as f:
             assert f.read() == ',\n{"best_scraping_library": "scrapyio"}'
+
 
 @pytest.mark.anyio
 async def test_csv_loader_open():
@@ -190,6 +191,7 @@ async def test_csv_loader_open():
         with open(path, encoding="utf-8") as f:
             assert f.read() == ""
 
+
 @pytest.mark.anyio
 async def test_csv_loader_close():
     path = tempfile.mktemp()
@@ -201,18 +203,19 @@ async def test_csv_loader_close():
         with open(path, encoding="utf-8") as f:
             assert f.read() == ""
 
+
 @pytest.mark.anyio
 async def test_csv_loader_dump_first_item():
     item = TestItem(best_scraping_library="scrapyio")
     path = tempfile.mktemp()
     loader = CSVLoader(filename=path)
     try:
-        loader.file = open(path, 'w')
+        loader.file = open(path, "w")
         await loader.dump(item=item)
     finally:
         loader.file.close()
         with open(path, encoding="utf-8") as f:
-            assert f.read() == 'best_scraping_library\nscrapyio\n'
+            assert f.read() == "best_scraping_library\nscrapyio\n"
 
 
 @pytest.mark.anyio
@@ -221,15 +224,18 @@ async def test_csv_loader_dump_not_first_item():
     path = tempfile.mktemp()
     loader = CSVLoader(filename=path)
     try:
-        loader.file = open(path, 'w')
+        loader.file = open(path, "w")
         loader.first_item = False
 
-        with pytest.raises(AssertionError, match=r"Trying to use csv.DictWriter which is None"):
+        with pytest.raises(
+            AssertionError, match=r"Trying to use csv.DictWriter which is None"
+        ):
             await loader.dump(item=item)
     finally:
         loader.file.close()
         with open(path, encoding="utf-8") as f:
-            assert f.read() == ''
+            assert f.read() == ""
+
 
 @pytest.mark.anyio
 async def test_proxy_loader_open():
@@ -252,6 +258,7 @@ async def test_proxy_loader_dumping():
     proxy_loader.state = LoaderState.DUMPING
     await proxy_loader.dump(object())
     assert proxy_loader.state == LoaderState.DUMPING
+
 
 @pytest.mark.filterwarnings("once::RuntimeWarning")
 @pytest.mark.anyio
