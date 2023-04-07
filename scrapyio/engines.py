@@ -133,6 +133,7 @@ class Engine:
         log.debug("Tear down was called")
         if self.items_manager:
             log.info(f"Closing the opened loaders: {self.items_manager.loaders=}")
+            await self.items_manager.tear_down_loaders()
 
     async def run(self) -> None:
         try:
