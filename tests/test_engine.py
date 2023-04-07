@@ -77,6 +77,22 @@ async def test_engine_response_parse_request_yielding(
 
 
 @pytest.mark.anyio
+async def test_engine_response_parse_invalid_yielding(
+    mocked_response, mocked_request, monkeypatch
+):
+    async def parse(self, response):
+        yield 2
+
+    monkeypatch.setattr(TestSpider, "parse", parse)
+    engine = Engine(spider=TestSpider())
+    with pytest.raises(
+        TypeError,
+        match=r"Invalid type yielded, expected " r"`Request` or `Item` got `int`",
+    ):
+        await engine._handle_single_response(response_and_generator=mocked_response)
+
+
+@pytest.mark.anyio
 async def test_engine_response_parse_item_yielding(mocked_response, monkeypatch):
     async def parse(self, response):
         yield Item()
