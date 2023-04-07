@@ -18,10 +18,12 @@ from .settings import CONFIGS
 from .types import ITEM_ADDED_CALLBACK_TYPE
 from .types import ITEM_IGNORING_CALLBACK_TYPE
 from .utils import load_module
+import logging
 
 if typing.TYPE_CHECKING:
     from .item_middlewares import BaseItemMiddleWare
 
+log = logging.getLogger("scrapyio")
 
 def build_items_middlewares_chain() -> typing.Sequence["BaseItemMiddleWare"]:
     return [
@@ -112,18 +114,17 @@ class BaseItemsManager(ABC):
         ]
         loading_tasks: typing.List[Task] = []
         if self.loaders:
-            await asyncio.gather(
-                *(
-                    loader.open()
-                    for loader in self.loaders
-                    if loader.state == LoaderState.CREATED
-                ),
-                return_exceptions=True,
-            )
+            await asyncio.gather(*(loader.open() for loader in self.loaders), return_exceptions=True)
             for loader in self.loaders:
                 for item_to_load in filtered_items:
                     loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
-        await asyncio.gather(*loading_tasks, return_exceptions=True)
+        results = await asyncio.gather(*loading_tasks, return_exceptions=True)
+
+        for result in results:
+            if isinstance(result, BaseException):
+                error_class_name = result.__class__.__name__
+                warn(f"Exception `{error_class_name}` was raised but ignored", category=RuntimeWarning)
+
         # To ensure that all dumping tasks are closed when
         # the `_tear_down` method is called, the gather method
         # should be called with return_exception=False.
@@ -133,7 +134,6 @@ class BaseItemsManager(ABC):
         # which will close the loader and release the
         # resources, preventing dumping tasks from being processed.
 
-        # TODO: implement dump_exception_callback
         return typing.cast(typing.List[Item], filtered_items)
 
     @abstractmethod
