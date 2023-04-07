@@ -5,6 +5,7 @@ from scrapyio import Item
 
 
 class Country(Item):
+    tablename = "Mytable"
     name: str
     population: int
     capital: str

@@ -80,7 +80,7 @@ class BaseItemsManager(ABC):
                 "loaders were specified for the item manager."
             )
 
-    async def tear_down_loaders(self):
+    async def tear_down_loaders(self) -> None:
         for loader in self.loaders:
             await loader.close()
 
