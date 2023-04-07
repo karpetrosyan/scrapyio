@@ -1,3 +1,10 @@
+"""
+Loaders are powerful tools that allow you to automate
+the process of dumping information into a JSON, CSV,
+or relational database. These tests ensure that the
+dumping process works properly.
+"""
+
 import datetime
 import tempfile
 import warnings

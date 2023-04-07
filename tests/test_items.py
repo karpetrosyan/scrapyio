@@ -1,3 +1,9 @@
+"""
+This module includes the scrapyio "items" test.
+These tests ensure that item management and
+item middlewares function as expected.
+"""
+
 import builtins
 import importlib
 import tempfile

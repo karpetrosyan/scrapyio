@@ -1,3 +1,9 @@
+"""
+This module contains unit tests for scrapyio's
+"downoader middleware". These tests ensure that
+the middlewares between the Downloader and the
+internet resource function as expected.
+"""
 import pytest
 from httpx._exceptions import HTTPStatusError
 

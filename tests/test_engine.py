@@ -1,3 +1,9 @@
+"""
+This module contains scrapyio "engine" unit tests.
+These tests ensure that the `engine` object, which
+is in charge of the entire scrapyio lifecycle, performs as expected.
+"""
+
 from contextlib import suppress
 
 import pytest

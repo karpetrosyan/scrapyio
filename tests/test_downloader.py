@@ -1,3 +1,8 @@
+"""
+This module contains unit tests for the Scrapyio
+"downloader". These checks ensure that request
+downloading and HTTP requests work properly.
+"""
 import inspect
 from contextlib import suppress
 from functools import partial
