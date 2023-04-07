@@ -34,9 +34,9 @@ def new(name):
 
 @cli.command()
 @click.argument("spider")
-@click.option("-j", "--json", type=str)
-@click.option("-c", "--csv", type=str)
-@click.option("-s", "--sql", type=str)
+@click.option("-j", "--json", type=str, help="Json file path")
+@click.option("-c", "--csv", type=str, help="Csv file path")
+@click.option("-s", "--sql", type=str, help="SQL URI supported by SQLAlchemy")
 def run(
     spider: str,
     json: typing.Optional[str],
