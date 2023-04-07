@@ -192,16 +192,21 @@ if sqlalchemy:
                 tablename = item.tablename
             else:
                 tablename = item.__class__.__name__
+            log.info(f"Creating the Table `{tablename}`")
             table = Table(
                 tablename,
                 self.meta,
                 Column("id", Integer, primary_key=True),
                 *(await self._get_mapped_fields(item=item)),
-                extend_existing=True,
             )
+            log.info("Table object was created")
             assert self.engine
+            log.info("Creating new connection for table")
             async with self.engine.connect() as conn:
+                log.info("Sync running `self.meta.create_all` method")
                 await conn.run_sync(self.meta.create_all)
+                log.info("Table was created")
+                await conn.commit()
             self.existing_tables[item.__class__.__name__] = table
 
         async def _get_mapped_fields(self, item: "Item") -> typing.List[Column]:

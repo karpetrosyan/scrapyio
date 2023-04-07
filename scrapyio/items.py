@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import typing
 from abc import ABC
 from abc import abstractmethod
@@ -13,17 +14,16 @@ from scrapyio.item_loaders import ProxyLoader
 
 from .exceptions import IgnoreItemError
 from .item_loaders import BaseLoader
-from .item_loaders import LoaderState
 from .settings import CONFIGS
 from .types import ITEM_ADDED_CALLBACK_TYPE
 from .types import ITEM_IGNORING_CALLBACK_TYPE
 from .utils import load_module
-import logging
 
 if typing.TYPE_CHECKING:
     from .item_middlewares import BaseItemMiddleWare
 
 log = logging.getLogger("scrapyio")
+
 
 def build_items_middlewares_chain() -> typing.Sequence["BaseItemMiddleWare"]:
     return [
@@ -114,25 +114,17 @@ class BaseItemsManager(ABC):
         ]
         loading_tasks: typing.List[Task] = []
         if self.loaders:
-            await asyncio.gather(*(loader.open() for loader in self.loaders), return_exceptions=True)
             for loader in self.loaders:
+                await loader.open()
                 for item_to_load in filtered_items:
                     loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
-        results = await asyncio.gather(*loading_tasks, return_exceptions=True)
+        future = asyncio.gather(*loading_tasks, return_exceptions=True)
+        results = await future
 
         for result in results:
             if isinstance(result, BaseException):
-                error_class_name = result.__class__.__name__
-                warn(f"Exception `{error_class_name}` was raised but ignored", category=RuntimeWarning)
-
-        # To ensure that all dumping tasks are closed when
-        # the `_tear_down` method is called, the gather method
-        # should be called with return_exception=False.
-
-        # If return_exception is set to True, after a single
-        # dumping task exception, `_tear_down` will be called,
-        # which will close the loader and release the
-        # resources, preventing dumping tasks from being processed.
+                future.cancel()  # pragma: no cover
+                raise result from None  # pragma: no cover
 
         return typing.cast(typing.List[Item], filtered_items)
 
