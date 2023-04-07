@@ -42,6 +42,8 @@ def orjson_dumps_wrapper(*args, **kwargs) -> str:
 
 
 class BaseItem(BaseModel):
+    tablename: typing.ClassVar[typing.Optional[str]] = None
+
     class Config:
         try:
             import orjson

@@ -8,7 +8,6 @@ from scrapyio import Request
 from scrapyio.downloader import BaseDownloader
 from scrapyio.downloader import Downloader
 from scrapyio.http import clean_up_response
-from scrapyio.item_loaders import BaseLoader
 from scrapyio.items import ItemManager
 from scrapyio.spider import BaseSpider
 from scrapyio.spider import Item
@@ -19,18 +18,14 @@ log = logging.getLogger("scrapyio")
 
 class Engine:
     downloader_class: typing.ClassVar[typing.Type[BaseDownloader]] = Downloader
-    items_manager_class: typing.ClassVar[
-        typing.Optional[typing.Type[ItemManager]]
-    ] = None
-    loader_class: typing.ClassVar[typing.Optional[typing.Type[BaseLoader]]] = None
 
     def __init__(
         self,
-        spider_class: typing.Type[BaseSpider],
+        spider: BaseSpider,
         downloader: typing.Optional[BaseDownloader] = None,
         items_manager: typing.Optional[ItemManager] = None,
     ):
-        self.spider = spider_class()
+        self.spider = spider
 
         self.downloader: BaseDownloader
         if downloader is None:
@@ -38,14 +33,7 @@ class Engine:
         else:
             self.downloader = downloader
 
-        self.items_manager: typing.Optional[ItemManager] = None
-
-        if items_manager is None:
-            if self.items_manager_class is not None:
-                self.items_manager = self.items_manager_class()
-        else:
-            self.items_manager = items_manager
-
+        self.items_manager = items_manager
         if self.items_manager is None:
             warn(
                 "Because no `items_manager` was specified, all items"

@@ -363,5 +363,31 @@ async def test_sqlalchemy_table_creation(monkeypatch):
             await loader._create_table_from_item(MyItem(a=1))
             assert len(loader.existing_tables) == 1
             assert isinstance(loader.existing_tables["MyItem"], Table)
+            assert loader.existing_tables["MyItem"].name == "MyItem"
+        finally:
+            await loader.engine.dispose()
+
+
+@pytest.mark.anyio
+async def test_sqlalchemy_table_creation_with_tablename(monkeypatch):
+    from sqlalchemy import Table
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    with tempfile.TemporaryDirectory() as path:
+        monkeypatch.syspath_prepend(path=path)
+        loader = SQLAlchemyLoader(
+            url="sqlite+aiosqlite:///" + str(Path(path) / "data.db")
+        )
+        try:
+            loader.engine = create_async_engine(url=loader.url)
+
+            class MyItem(Item):
+                tablename = "MyNewItem"
+                a: int
+
+            await loader._create_table_from_item(MyItem(a=1))
+            assert len(loader.existing_tables) == 1
+            assert isinstance(loader.existing_tables["MyItem"], Table)
+            assert loader.existing_tables["MyItem"].name == "MyNewItem"
         finally:
             await loader.engine.dispose()

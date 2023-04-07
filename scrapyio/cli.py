@@ -90,6 +90,6 @@ def run(
 
     item_manager = ItemManager(loaders=loaders)
     log.debug("Creating the Engine instance")
-    engine = Engine(spider_class=spider_class, items_manager=item_manager)
+    engine = Engine(spider=spider_class(), items_manager=item_manager)
     log.info("Running engine")
     asyncio.run(engine.run())

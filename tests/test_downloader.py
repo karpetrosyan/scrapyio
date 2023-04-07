@@ -202,10 +202,8 @@ async def test_response_changing_in_middlewares(mocked_request):
         )
         assert response.text
     finally:
-        try:
+        with suppress(StopAsyncIteration):
             await gen.__anext__()
-        except StopAsyncIteration:
-            ...
 
 
 @pytest.mark.anyio
@@ -257,10 +255,8 @@ async def test_stream_request_with_session(app):
             await resp.aread()
             assert resp.text
         finally:
-            try:
+            with suppress(StopAsyncIteration):
                 await gen.__anext__()
-            except StopAsyncIteration:
-                ...  # pragma: no cover
 
 
 @pytest.mark.anyio
@@ -274,10 +270,8 @@ async def test_standard_request_with_session(app):
             resp = await gen.__anext__()
             assert resp.text
         finally:
-            try:
+            with suppress(StopAsyncIteration):
                 await gen.__anext__()
-            except StopAsyncIteration:
-                ...  # pragma: no cover
 
 
 @pytest.mark.anyio
@@ -291,10 +285,8 @@ async def test_standard_downloader_request_handling(mocked_request):
     try:
         assert response.text
     finally:
-        try:
+        with suppress(StopAsyncIteration):
             await clean_up.__anext__()
-        except StopAsyncIteration:
-            ...
 
 
 @pytest.mark.anyio
@@ -308,10 +300,8 @@ async def test_session_downloader_request_handling(mocked_request, app):
     try:
         assert response.text
     finally:
-        try:
+        with suppress(StopAsyncIteration):
             await clean_up.__anext__()
-        except StopAsyncIteration:
-            ...
 
 
 @pytest.mark.anyio
@@ -319,10 +309,8 @@ async def test_downloader_request_processing(mocked_request):
     req = mocked_request(url="/")
     downloader = Downloader()
     clean_up, resp = await downloader._process_request_with_middlewares(request=req)
-    try:
+    with suppress(StopAsyncIteration):
         await clean_up.__anext__()
-    except StopAsyncIteration:
-        ...
 
 
 @pytest.mark.anyio
@@ -335,10 +323,8 @@ async def test_downloader_request_processing_with_explicit_request(
     downloader.middleware_classes.append(mocked_md)
     clean_up, resp = await downloader._process_request_with_middlewares(request=req)
     assert isinstance(resp, Response)
-    try:
+    with suppress(StopAsyncIteration):
         await clean_up.__anext__()
-    except StopAsyncIteration:
-        ...
 
 
 @pytest.mark.anyio
@@ -351,10 +337,8 @@ async def test_downloader_request_processing_with_explicit_response(
     downloader.middleware_classes.append(mocked_md)
     clean_up, resp = await downloader._process_request_with_middlewares(request=req)
     assert resp.text
-    try:
+    with suppress(StopAsyncIteration):
         await clean_up.__anext__()
-    except StopAsyncIteration:
-        ...
 
 
 @pytest.mark.anyio
