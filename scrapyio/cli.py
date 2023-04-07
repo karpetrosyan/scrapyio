@@ -68,7 +68,9 @@ def run(
     spider_class = getattr(spiders, spider, None)
 
     if spider_class is None:
-        raise SpiderNotFound("Spider `%s` was not found in the `spiders.py` file")
+        raise SpiderNotFound(
+            "Spider `%s` was not " "found in the `spiders.py` file" % spider
+        )
 
     loaders: typing.List[BaseLoader] = []
     loader: BaseLoader
