@@ -80,6 +80,10 @@ class BaseItemsManager(ABC):
                 "loaders were specified for the item manager."
             )
 
+    async def tear_down_loaders(self):
+        for loader in self.loaders:
+            await loader.close()
+
     async def _send_single_item_via_middlewares(
         self, item: Item
     ) -> typing.Optional[Item]:
@@ -114,6 +118,7 @@ class BaseItemsManager(ABC):
                     for loader in self.loaders
                     if loader.state == LoaderState.CREATED
                 ),
+                return_exceptions=True,
             )
             for loader in self.loaders:
                 for item_to_load in filtered_items:

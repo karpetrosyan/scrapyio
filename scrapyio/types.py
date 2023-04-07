@@ -20,3 +20,5 @@ ITEM_ADDED_CALLBACK_TYPE = typing.Callable[
 ]
 
 START_REQUESTS_TYPE = typing.List[typing.Union["Request", str]]
+
+DOWNLOADER_EXCEPTION_CALLBACK = typing.Callable[["Request", BaseException], None]

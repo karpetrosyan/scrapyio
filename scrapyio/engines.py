@@ -12,6 +12,7 @@ from scrapyio.items import ItemManager
 from scrapyio.spider import BaseSpider
 from scrapyio.spider import Item
 from scrapyio.types import CLEANUP_WITH_RESPONSE
+from scrapyio.types import DOWNLOADER_EXCEPTION_CALLBACK
 
 log = logging.getLogger("scrapyio")
 
@@ -24,8 +25,13 @@ class Engine:
         spider: BaseSpider,
         downloader: typing.Optional[BaseDownloader] = None,
         items_manager: typing.Optional[ItemManager] = None,
+        loop_delay: int = 0,
+        downloader_exception_callback: typing.Optional[
+            DOWNLOADER_EXCEPTION_CALLBACK
+        ] = None,
     ):
         self.spider = spider
+        self.loop_delay = loop_delay
 
         self.downloader: BaseDownloader
         if downloader is None:
@@ -33,6 +39,7 @@ class Engine:
         else:
             self.downloader = downloader
 
+        self.downloader_exception_callback = downloader_exception_callback
         self.items_manager = items_manager
         if self.items_manager is None:
             warn(
@@ -60,9 +67,16 @@ class Engine:
         responses: typing.Iterable[
             typing.Optional[CLEANUP_WITH_RESPONSE]
         ] = await asyncio.gather(
-            *request_tasks
+            *request_tasks, return_exceptions=True
         )  # type: ignore
-        return [response for response in responses if response]
+        for response in responses:
+            if isinstance(response, BaseException):
+                self.downloader_exception_callback(response)
+        return [
+            response
+            for response in responses
+            if response and not isinstance(response, BaseException)
+        ]
 
     async def _handle_single_response(
         self, response_and_generator: CLEANUP_WITH_RESPONSE
@@ -78,8 +92,8 @@ class Engine:
                 self.spider.requests.append(yielded_value)
             elif isinstance(yielded_value, Item):
                 self.spider.items.append(yielded_value)  # pragma: no cover
-            elif yielded_value is None:
-                ...
+            elif yielded_value is None:  # pragma: no cover
+                ...  # pragma: no cover
             else:
                 raise TypeError(
                     "Invalid type yielded, expected `Request` or `Item` got `%s`"
@@ -93,7 +107,11 @@ class Engine:
             asyncio.create_task(self._handle_single_response(response))
             for response in responses
         ]
-        await asyncio.gather(*tasks)
+        handled_responses = await asyncio.gather(*tasks, return_exceptions=True)
+        if hasattr(self.spider, "handle_parse_exception"):
+            for handled_response in handled_responses:
+                if isinstance(handled_response, BaseException):
+                    self.spider.handle_parse_exception(handled_response)
 
     async def _run_once(self) -> None:
         log.debug("Running engine once")
@@ -113,21 +131,14 @@ class Engine:
 
     async def _tear_down(self) -> None:
         log.debug("Tear down was called")
-        if self.items_manager and self.items_manager.loaders:
+        if self.items_manager:
             log.info(f"Closing the opened loaders: {self.items_manager.loaders=}")
-            for loader in self.items_manager.loaders:
-                await loader.close()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self._tear_down()
 
     async def run(self) -> None:
         try:
             while self.spider.requests:
                 await self._run_once()
+                await asyncio.sleep(self.loop_delay)
         finally:
             log.info("Calling thear down on engine")
             await self._tear_down()

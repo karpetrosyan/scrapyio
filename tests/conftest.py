@@ -1,7 +1,9 @@
 import sys
+from contextlib import suppress
 
 import pytest
 
+from scrapyio.downloader import send_request
 from scrapyio.http import Request
 
 
@@ -38,3 +40,19 @@ def mocked_request(app):
         return Request(*args, **kwargs)
 
     return _inner_decorator
+
+
+@pytest.fixture
+async def mocked_response(mocked_request):
+    req = mocked_request(url="/")
+    response_gen = send_request(req)
+    try:
+        yield (response_gen, await response_gen.__anext__())
+    finally:
+        with suppress(StopAsyncIteration):
+            await response_gen.__anext__()
+
+
+@pytest.fixture
+async def mocked_response1(mocked_request):
+    return mocked_request

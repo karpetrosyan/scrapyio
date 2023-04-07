@@ -151,6 +151,14 @@ async def test_item_manager_items_sending():
     assert len(clean_items) == 2
 
 
+@pytest.mark.integtest
+@pytest.mark.anyio
+async def test_loader_tear_down(mocked_request):
+    item_manager = ItemManager(loaders=[JSONLoader()])
+    with pytest.raises(RuntimeError):
+        await item_manager.tear_down_loaders()
+
+
 @pytest.mark.anyio
 async def test_item_manager_handling():
     f1, f2 = tempfile.mktemp(), tempfile.mktemp()
