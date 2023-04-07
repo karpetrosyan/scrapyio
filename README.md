@@ -32,7 +32,7 @@ You must instruct scrapyio on where to begin the requests, i.e. the urls to be s
 
 ## Requests
 
-As you may be aware, you can pass the url string in start requests to tell `Scrapyio` which content you want to download; however, some websites require additional **headers** to function properly; therefore, we can pass `Request` objects explicitly rather than only strings.
+As you know, you can pass the url string in start requests to tell `Scrapyio` which content you want to download; however, some websites require additional **headers** to function properly; therefore, we can pass `Request` objects explicitly rather than only strings.
 
 so we can replace
 ```python
