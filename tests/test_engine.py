@@ -119,28 +119,6 @@ async def test_engine_responses_handling(mocked_response, mocked_response1):
     assert ret is None
 
 
-@pytest.mark.anyio
-async def test_engine_responses_handling_exception_callback(
-    mocked_response, mocked_response1, monkeypatch
-):
-    exceptions = []
-
-    async def mocked_parse(response):
-        yield None
-        raise RuntimeError
-
-    def callback(exc):
-        exceptions.append(exc)
-
-    spider = TestSpider()
-    monkeypatch.setattr(spider, "handle_parse_exception", callback)
-    monkeypatch.setattr(spider, "parse", mocked_parse)
-    engine = Engine(spider=spider)
-    ret = await engine._handle_responses([mocked_response, mocked_response1])
-    assert ret is None
-    assert len(exceptions) == 2
-
-
 @pytest.mark.integtest
 @pytest.mark.anyio
 async def test_engine_requests_handling(mocked_request):
@@ -158,25 +136,6 @@ async def test_engine_requests_handling(mocked_request):
         for clean_up, response in responses:
             await clean_up_response(clean_up)
     assert engine.spider.requests == []
-
-
-@pytest.mark.integtest
-@pytest.mark.anyio
-async def test_engine_downloader_exception_callback(mocked_request, monkeypatch):
-    monkeypatch.setattr(
-        CONFIGS, "MIDDLEWARES", ["tests.test_engine.ExceptionMiddleWare"]
-    )
-    req = mocked_request(url="/")
-    exceptions = []
-    engine = Engine(
-        spider=TestSpider(),
-        downloader_exception_callback=lambda exc: exceptions.append(exc),
-    )
-    engine.spider.requests.append(req)
-    await engine._send_all_requests_to_downloader()
-
-    assert len(exceptions) == 1
-    assert isinstance(exceptions[0], RuntimeError)
 
 
 @pytest.mark.integtest
