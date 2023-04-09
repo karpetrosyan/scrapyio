@@ -14,7 +14,6 @@ from scrapyio.http import clean_up_response
 from scrapyio.items import Item
 from scrapyio.items import ItemManager
 from scrapyio.middlewares import BaseMiddleWare
-from scrapyio.settings import CONFIGS
 from scrapyio.spider import BaseSpider
 
 
@@ -114,7 +113,6 @@ async def test_engine_responses_handling(mocked_response, mocked_response1):
     engine = Engine(spider=TestSpider())
     resp1 = mocked_response
     resp2 = mocked_response
-    print(resp1, resp2)
     ret = await engine._handle_responses([resp1, resp2])
     assert ret is None
 

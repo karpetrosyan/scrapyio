@@ -4,7 +4,6 @@ import logging
 import typing
 from abc import ABC
 from abc import abstractmethod
-from asyncio import Task
 from functools import partial
 from warnings import warn
 
@@ -63,10 +62,10 @@ class Item(BaseItem):
 
 class BaseItemsManager(ABC):
     def __init__(
-            self,
-            ignoring_callback: typing.Optional[ITEM_IGNORING_CALLBACK_TYPE] = None,
-            success_callback: typing.Optional[ITEM_ADDED_CALLBACK_TYPE] = None,
-            loaders: typing.Optional[typing.List[BaseLoader]] = None,
+        self,
+        ignoring_callback: typing.Optional[ITEM_IGNORING_CALLBACK_TYPE] = None,
+        success_callback: typing.Optional[ITEM_ADDED_CALLBACK_TYPE] = None,
+        loaders: typing.Optional[typing.List[BaseLoader]] = None,
     ):
         self.middlewares = build_items_middlewares_chain()
         self.ignoring_callback = ignoring_callback
@@ -87,7 +86,7 @@ class BaseItemsManager(ABC):
             await loader.close()
 
     async def _send_single_item_via_middlewares(
-            self, item: Item
+        self, item: Item
     ) -> typing.Optional[Item]:
         for middleware in self.middlewares:
             try:
@@ -102,16 +101,16 @@ class BaseItemsManager(ABC):
         return item
 
     async def _send_items_via_middlewares(
-            self, items: typing.Sequence[Item]
+        self, items: typing.Sequence[Item]
     ) -> typing.Sequence[Item]:
         tasks = []
         async with asyncio.TaskGroup() as tg:
             for item in items:
-                tasks.append(tg.create_task(self._send_single_item_via_middlewares(item)))
+                tasks.append(
+                    tg.create_task(self._send_single_item_via_middlewares(item))
+                )
 
-        filtered_items = [
-            task.result() for task in tasks if task.result() is not None
-        ]
+        filtered_items = [task.result() for task in tasks if task.result() is not None]
         if self.loaders:
             async with asyncio.TaskGroup() as tg:
                 for loader in self.loaders:

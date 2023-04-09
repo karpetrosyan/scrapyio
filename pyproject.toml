@@ -54,3 +54,22 @@ path = "scrapyio/__about__.py"
 
 [project.scripts]
 scrapyio = "scrapyio.cli:cli"
+
+
+[tool.ruff]
+ignore = []
+line-length = 88
+select = [
+    "E",
+    "F",
+    "W",
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = [
+    "F401",
+    "F403",
+    "E722",
+]
+
+

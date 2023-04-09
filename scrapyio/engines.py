@@ -59,13 +59,13 @@ class Engine:
         request_tasks: typing.List[typing.Awaitable] = []
         async with asyncio.TaskGroup() as tg:
             for request in self.spider.requests:
-                request_tasks.append(tg.create_task(
-                    self._send_single_request_to_downloader(request=request)
-                ))
+                request_tasks.append(
+                    tg.create_task(
+                        self._send_single_request_to_downloader(request=request)
+                    )
+                )
         self.spider.requests.clear()
-        return [
-            request_task.result() for request_task in request_tasks
-        ]
+        return [request_task.result() for request_task in request_tasks]
 
     async def _handle_single_response(
         self, response_and_generator: CLEANUP_WITH_RESPONSE

@@ -8,10 +8,8 @@ hatch==1.6.3
 mypy==1.1.1
 
 # linters
+ruff==0.0.261
 black==23.3.0
-isort==5.11.4; python_version<'3.8'
-isort==5.12.0; python_version>='3.8'
-flake8==3.9.2
 importlib-metadata==4.13.0; python_version>='3.7'
 
 # tests
