@@ -57,15 +57,26 @@ class Engine:
         self,
     ) -> typing.List[CLEANUP_WITH_RESPONSE]:
         request_tasks: typing.List[typing.Awaitable] = []
-        async with asyncio.TaskGroup() as tg:
-            for request in self.spider.requests:
-                request_tasks.append(
-                    tg.create_task(
-                        self._send_single_request_to_downloader(request=request)
-                    )
+        for request in self.spider.requests:
+            request_tasks.append(
+                asyncio.create_task(
+                    self._send_single_request_to_downloader(request=request)
                 )
+            )
         self.spider.requests.clear()
-        return [request_task.result() for request_task in request_tasks]
+        responses: typing.Iterable[
+            typing.Optional[CLEANUP_WITH_RESPONSE]
+        ] = await asyncio.gather(
+            *request_tasks, return_exceptions=True
+        )  # type: ignore
+        for response in responses:
+            if isinstance(response, BaseException):
+                self.downloader_exception_callback(response)
+        return [
+            response
+            for response in responses
+            if response and not isinstance(response, BaseException)
+        ]
 
     async def _handle_single_response(
         self, response_and_generator: CLEANUP_WITH_RESPONSE
@@ -92,14 +103,15 @@ class Engine:
     async def _handle_responses(
         self, responses: typing.List[CLEANUP_WITH_RESPONSE]
     ) -> None:
-        tasks = []
-        async with asyncio.TaskGroup() as tg:
-            for response in responses:
-                tasks.append(
-                    tg.create_task(
-                        self._handle_single_response(response_and_generator=response)
-                    )
-                )
+        tasks = [
+            asyncio.create_task(self._handle_single_response(response))
+            for response in responses
+        ]
+        handled_responses = await asyncio.gather(*tasks, return_exceptions=True)
+        if hasattr(self.spider, "handle_parse_exception"):
+            for handled_response in handled_responses:
+                if isinstance(handled_response, BaseException):
+                    self.spider.handle_parse_exception(handled_response)
 
     async def _run_once(self) -> None:
         log.debug("Running engine once")
