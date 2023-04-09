@@ -2,8 +2,7 @@ import asyncio
 import json
 import logging
 import typing
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from asyncio import Task
 from functools import partial
 from warnings import warn
@@ -15,8 +14,7 @@ from scrapyio.item_loaders import ProxyLoader
 from .exceptions import IgnoreItemError
 from .item_loaders import BaseLoader
 from .settings import CONFIGS
-from .types import ITEM_ADDED_CALLBACK_TYPE
-from .types import ITEM_IGNORING_CALLBACK_TYPE
+from .types import ITEM_ADDED_CALLBACK_TYPE, ITEM_IGNORING_CALLBACK_TYPE
 from .utils import load_module
 
 if typing.TYPE_CHECKING:

@@ -13,11 +13,13 @@ from httpx import Response
 from httpx._exceptions import ResponseNotRead
 
 from scrapyio import Request
-from scrapyio.downloader import Downloader
-from scrapyio.downloader import SessionDownloader
-from scrapyio.downloader import create_default_session
-from scrapyio.downloader import send_request
-from scrapyio.downloader import send_request_with_session
+from scrapyio.downloader import (
+    Downloader,
+    SessionDownloader,
+    create_default_session,
+    send_request,
+    send_request_with_session,
+)
 from scrapyio.exceptions import IgnoreRequestError
 from scrapyio.middlewares import BaseMiddleWare
 from scrapyio.settings import CONFIGS

@@ -1,11 +1,9 @@
 import typing
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from httpx import HTTPStatusError
 
-from .http import Request
-from .http import Response
+from .http import Request, Response
 from .settings import CONFIGS
 from .types import CLEANUP_WITH_RESPONSE
 from .utils import load_module

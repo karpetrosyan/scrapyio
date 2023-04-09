@@ -5,8 +5,7 @@ from bs4 import BeautifulSoup
 from scrapyio import Request
 from scrapyio.engines import Engine
 from scrapyio.item_loaders import JSONLoader
-from scrapyio.items import Item
-from scrapyio.items import ItemManager
+from scrapyio.items import Item, ItemManager
 from scrapyio.spider import BaseSpider
 
 

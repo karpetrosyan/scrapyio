@@ -1,6 +1,5 @@
 import typing
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from httpx._client import Response
 

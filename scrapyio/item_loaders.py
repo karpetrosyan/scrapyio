@@ -1,11 +1,9 @@
 import typing
 import warnings
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from asyncio import Lock
 from datetime import datetime
-from enum import Enum
-from enum import auto
+from enum import Enum, auto
 from types import ModuleType
 
 from .utils import random_filename
@@ -20,18 +18,18 @@ sqlalchemy: typing.Optional[ModuleType]
 
 try:
     import sqlalchemy
-    from sqlalchemy import Column
-    from sqlalchemy import DateTime
-    from sqlalchemy import Float
-    from sqlalchemy import Integer
-    from sqlalchemy import MetaData
-    from sqlalchemy import String
-    from sqlalchemy import Table
-    from sqlalchemy import insert
+    from sqlalchemy import (
+        Column,
+        DateTime,
+        Float,
+        Integer,
+        MetaData,
+        String,
+        Table,
+        insert,
+    )
     from sqlalchemy.engine import URL
-    from sqlalchemy.ext.asyncio import AsyncConnection
-    from sqlalchemy.ext.asyncio import AsyncEngine
-    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 except ImportError:  # pragma: no cover
     sqlalchemy = None  # pragma: no cover
 

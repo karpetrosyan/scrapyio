@@ -5,14 +5,11 @@ import typing
 from warnings import warn
 
 from scrapyio import Request
-from scrapyio.downloader import BaseDownloader
-from scrapyio.downloader import Downloader
+from scrapyio.downloader import BaseDownloader, Downloader
 from scrapyio.http import clean_up_response
 from scrapyio.items import ItemManager
-from scrapyio.spider import BaseSpider
-from scrapyio.spider import Item
-from scrapyio.types import CLEANUP_WITH_RESPONSE
-from scrapyio.types import DOWNLOADER_EXCEPTION_CALLBACK
+from scrapyio.spider import BaseSpider, Item
+from scrapyio.types import CLEANUP_WITH_RESPONSE, DOWNLOADER_EXCEPTION_CALLBACK
 
 log = logging.getLogger("scrapyio")
 

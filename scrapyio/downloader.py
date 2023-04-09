@@ -1,25 +1,23 @@
 import logging
 import typing
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 import httpx
-from httpx._client import USE_CLIENT_DEFAULT
-from httpx._client import Response
-from httpx._types import CertTypes
-from httpx._types import CookieTypes
-from httpx._types import ProxiesTypes
-from httpx._types import TimeoutTypes
-from httpx._types import URLTypes
-from httpx._types import VerifyTypes
+from httpx._client import USE_CLIENT_DEFAULT, Response
+from httpx._types import (
+    CertTypes,
+    CookieTypes,
+    ProxiesTypes,
+    TimeoutTypes,
+    URLTypes,
+    VerifyTypes,
+)
 
 from scrapyio.utils import first_not_none
 
 from .exceptions import IgnoreRequestError
-from .http import Request
-from .http import clean_up_response
-from .middlewares import BaseMiddleWare
-from .middlewares import build_middlewares_chain
+from .http import Request, clean_up_response
+from .middlewares import BaseMiddleWare, build_middlewares_chain
 from .settings import CONFIGS
 from .types import CLEANUP_WITH_RESPONSE
 

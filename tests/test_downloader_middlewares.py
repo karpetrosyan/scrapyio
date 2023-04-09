@@ -7,8 +7,7 @@ internet resource function as expected.
 import pytest
 from httpx._exceptions import HTTPStatusError
 
-from scrapyio.middlewares import ProxyMiddleWare
-from scrapyio.middlewares import build_middlewares_chain
+from scrapyio.middlewares import ProxyMiddleWare, build_middlewares_chain
 from scrapyio.settings import CONFIGS
 
 

@@ -8,12 +8,11 @@ from contextlib import suppress
 
 import pytest
 
+from scrapyio import CONFIGS
 from scrapyio.downloader import SessionDownloader
 from scrapyio.engines import Engine
 from scrapyio.http import clean_up_response
-from scrapyio.items import Item
-from scrapyio.items import ItemManager
-from scrapyio import CONFIGS
+from scrapyio.items import Item, ItemManager
 from scrapyio.middlewares import BaseMiddleWare
 from scrapyio.spider import BaseSpider
 
