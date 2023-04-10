@@ -1,5 +1,4 @@
-from logging import config
-from logging import getLogger
+from logging import config, getLogger
 
 from scrapyio.settings import CONFIGS
 

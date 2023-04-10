@@ -3,5 +3,5 @@ set -x
 
 PROJECT="scrapyio tests examples"
 
-isort $PROJECT
+ruff --fix $PROJECT
 black $PROJECT

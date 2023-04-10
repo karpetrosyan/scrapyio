@@ -13,12 +13,14 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
-from scrapyio.item_loaders import BaseLoader
-from scrapyio.item_loaders import CSVLoader
-from scrapyio.item_loaders import JSONLoader
-from scrapyio.item_loaders import LoaderState
-from scrapyio.item_loaders import ProxyLoader
-from scrapyio.item_loaders import SQLAlchemyLoader
+from scrapyio.item_loaders import (
+    BaseLoader,
+    CSVLoader,
+    JSONLoader,
+    LoaderState,
+    ProxyLoader,
+    SQLAlchemyLoader,
+)
 from scrapyio.items import Item
 
 
@@ -340,10 +342,7 @@ async def test_sqlalchemy_fields_mapper():
         SQLAlchemyLoader, item=item
     )
     mapped_a, mapped_b, mapped_c, mapped_d = mapped_fields
-    from sqlalchemy import DateTime
-    from sqlalchemy import Float
-    from sqlalchemy import Integer
-    from sqlalchemy import String
+    from sqlalchemy import DateTime, Float, Integer, String
 
     assert mapped_a.type.__class__ == Integer
     assert mapped_b.type.__class__ == Float

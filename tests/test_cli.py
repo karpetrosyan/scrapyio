@@ -8,8 +8,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from scrapyio.cli import cli
-from scrapyio.templates import configuration_template
-from scrapyio.templates import spider_file_template
+from scrapyio.templates import configuration_template, spider_file_template
 
 
 def test_scrapyio_new_command():

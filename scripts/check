@@ -3,7 +3,6 @@ set -x
 
 PROJECT="scrapyio tests examples"
 
-flake8 scrapyio tests
+ruff check scrapyio tests
 black --check --diff $PROJECT
-isort --check --diff $PROJECT
 mypy scrapyio tests

@@ -6,8 +6,7 @@ configuration overriding functions as expected.
 
 import pytest
 
-from scrapyio.http import Request
-from scrapyio.http import clean_up_response
+from scrapyio.http import Request, clean_up_response
 from scrapyio.settings import CONFIGS
 
 

@@ -8,13 +8,12 @@ from contextlib import suppress
 
 import pytest
 
+from scrapyio import CONFIGS
 from scrapyio.downloader import SessionDownloader
 from scrapyio.engines import Engine
 from scrapyio.http import clean_up_response
-from scrapyio.items import Item
-from scrapyio.items import ItemManager
+from scrapyio.items import Item, ItemManager
 from scrapyio.middlewares import BaseMiddleWare
-from scrapyio.settings import CONFIGS
 from scrapyio.spider import BaseSpider
 
 
@@ -114,9 +113,30 @@ async def test_engine_responses_handling(mocked_response, mocked_response1):
     engine = Engine(spider=TestSpider())
     resp1 = mocked_response
     resp2 = mocked_response
-    print(resp1, resp2)
     ret = await engine._handle_responses([resp1, resp2])
     assert ret is None
+
+
+@pytest.mark.anyio
+async def test_engine_responses_handling_exception_callback(
+    mocked_response, mocked_response1, monkeypatch
+):
+    exceptions = []
+
+    async def mocked_parse(response):
+        yield None
+        raise RuntimeError
+
+    def callback(exc):
+        exceptions.append(exc)
+
+    spider = TestSpider()
+    monkeypatch.setattr(spider, "handle_parse_exception", callback)
+    monkeypatch.setattr(spider, "parse", mocked_parse)
+    engine = Engine(spider=spider)
+    ret = await engine._handle_responses([mocked_response, mocked_response1])
+    assert ret is None
+    assert len(exceptions) == 2
 
 
 @pytest.mark.integtest
@@ -136,6 +156,25 @@ async def test_engine_requests_handling(mocked_request):
         for clean_up, response in responses:
             await clean_up_response(clean_up)
     assert engine.spider.requests == []
+
+
+@pytest.mark.integtest
+@pytest.mark.anyio
+async def test_engine_downloader_exception_callback(mocked_request, monkeypatch):
+    monkeypatch.setattr(
+        CONFIGS, "MIDDLEWARES", ["tests.test_engine.ExceptionMiddleWare"]
+    )
+    req = mocked_request(url="/")
+    exceptions = []
+    engine = Engine(
+        spider=TestSpider(),
+        downloader_exception_callback=lambda exc: exceptions.append(exc),
+    )
+    engine.spider.requests.append(req)
+    await engine._send_all_requests_to_downloader()
+
+    assert len(exceptions) == 1
+    assert isinstance(exceptions[0], RuntimeError)
 
 
 @pytest.mark.integtest

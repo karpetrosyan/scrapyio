@@ -2,8 +2,7 @@ import asyncio
 import json
 import logging
 import typing
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from asyncio import Task
 from functools import partial
 from warnings import warn
@@ -15,8 +14,7 @@ from scrapyio.item_loaders import ProxyLoader
 from .exceptions import IgnoreItemError
 from .item_loaders import BaseLoader
 from .settings import CONFIGS
-from .types import ITEM_ADDED_CALLBACK_TYPE
-from .types import ITEM_IGNORING_CALLBACK_TYPE
+from .types import ITEM_ADDED_CALLBACK_TYPE, ITEM_IGNORING_CALLBACK_TYPE
 from .utils import load_module
 
 if typing.TYPE_CHECKING:
@@ -63,10 +61,10 @@ class Item(BaseItem):
 
 class BaseItemsManager(ABC):
     def __init__(
-            self,
-            ignoring_callback: typing.Optional[ITEM_IGNORING_CALLBACK_TYPE] = None,
-            success_callback: typing.Optional[ITEM_ADDED_CALLBACK_TYPE] = None,
-            loaders: typing.Optional[typing.List[BaseLoader]] = None,
+        self,
+        ignoring_callback: typing.Optional[ITEM_IGNORING_CALLBACK_TYPE] = None,
+        success_callback: typing.Optional[ITEM_ADDED_CALLBACK_TYPE] = None,
+        loaders: typing.Optional[typing.List[BaseLoader]] = None,
     ):
         self.middlewares = build_items_middlewares_chain()
         self.ignoring_callback = ignoring_callback
@@ -87,7 +85,7 @@ class BaseItemsManager(ABC):
             await loader.close()
 
     async def _send_single_item_via_middlewares(
-            self, item: Item
+        self, item: Item
     ) -> typing.Optional[Item]:
         for middleware in self.middlewares:
             try:
@@ -102,22 +100,30 @@ class BaseItemsManager(ABC):
         return item
 
     async def _send_items_via_middlewares(
-            self, items: typing.Sequence[Item]
+        self, items: typing.Sequence[Item]
     ) -> typing.Sequence[Item]:
-        tasks = []
-        async with asyncio.TaskGroup() as tg:
-            for item in items:
-                tasks.append(tg.create_task(self._send_single_item_via_middlewares(item)))
+        tasks = [
+            asyncio.create_task(self._send_single_item_via_middlewares(item))
+            for item in items
+        ]
 
         filtered_items = [
-            task.result() for task in tasks if task.result() is not None
+            added_item for added_item in await asyncio.gather(*tasks) if added_item
         ]
+        loading_tasks: typing.List[Task] = []
         if self.loaders:
-            async with asyncio.TaskGroup() as tg:
-                for loader in self.loaders:
-                    await loader.open()
-                    for item_to_load in filtered_items:
-                        tg.create_task(loader.dump(item_to_load))
+            for loader in self.loaders:
+                await loader.open()
+                for item_to_load in filtered_items:
+                    loading_tasks.append(asyncio.create_task(loader.dump(item_to_load)))
+        future = asyncio.gather(*loading_tasks, return_exceptions=True)
+        results = await future
+
+        for result in results:
+            if isinstance(result, BaseException):
+                future.cancel()  # pragma: no cover
+                raise result from None  # pragma: no cover
+
         return typing.cast(typing.List[Item], filtered_items)
 
     @abstractmethod

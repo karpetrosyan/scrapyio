@@ -53,4 +53,6 @@ async def mocked_response(mocked_request):
             await response_gen.__anext__()
 
 
-mocked_response1 = mocked_response
+@pytest.fixture
+async def mocked_response1(mocked_request):
+    return mocked_request

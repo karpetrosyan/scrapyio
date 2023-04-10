@@ -1,23 +1,24 @@
 import logging
 import typing
-from dataclasses import dataclass
-from dataclasses import field
+from dataclasses import dataclass, field
 from itertools import count
 
 from httpx import Response
 from httpx._config import Timeout
-from httpx._types import AuthTypes
-from httpx._types import CertTypes
-from httpx._types import CookieTypes
-from httpx._types import HeaderTypes
-from httpx._types import ProxiesTypes
-from httpx._types import QueryParamTypes
-from httpx._types import RequestContent
-from httpx._types import RequestData
-from httpx._types import RequestFiles
-from httpx._types import TimeoutTypes
-from httpx._types import URLTypes
-from httpx._types import VerifyTypes
+from httpx._types import (
+    AuthTypes,
+    CertTypes,
+    CookieTypes,
+    HeaderTypes,
+    ProxiesTypes,
+    QueryParamTypes,
+    RequestContent,
+    RequestData,
+    RequestFiles,
+    TimeoutTypes,
+    URLTypes,
+    VerifyTypes,
+)
 
 from .settings import CONFIGS
 

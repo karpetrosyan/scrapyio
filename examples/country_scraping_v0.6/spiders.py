@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 
-from scrapyio import BaseSpider
-from scrapyio import Item
+from scrapyio import BaseSpider, Item
 
 
 class Country(Item):

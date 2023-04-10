@@ -1,12 +1,14 @@
 import typing
 
-from httpx._types import AuthTypes
-from httpx._types import CertTypes
-from httpx._types import CookieTypes
-from httpx._types import HeaderTypes
-from httpx._types import ProxiesTypes
-from httpx._types import QueryParamTypes
-from httpx._types import VerifyTypes
+from httpx._types import (
+    AuthTypes,
+    CertTypes,
+    CookieTypes,
+    HeaderTypes,
+    ProxiesTypes,
+    QueryParamTypes,
+    VerifyTypes,
+)
 
 ITEM_MIDDLEWARES: typing.List[str] = []
 

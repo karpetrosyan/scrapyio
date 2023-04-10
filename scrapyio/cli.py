@@ -17,10 +17,8 @@ def cli():
 def new(name):
     from pathlib import Path
 
-    from scrapyio.settings import SETTINGS_FILE_NAME
-    from scrapyio.settings import SPIDERS_FILE_NAME
-    from scrapyio.templates import configuration_template
-    from scrapyio.templates import spider_file_template
+    from scrapyio.settings import SETTINGS_FILE_NAME, SPIDERS_FILE_NAME
+    from scrapyio.templates import configuration_template, spider_file_template
 
     path = Path.cwd()
     dir_path = path / name
@@ -45,10 +43,12 @@ def run(
 ):
     from scrapyio.engines import Engine
     from scrapyio.exceptions import SpiderNotFound
-    from scrapyio.item_loaders import BaseLoader
-    from scrapyio.item_loaders import CSVLoader
-    from scrapyio.item_loaders import JSONLoader
-    from scrapyio.item_loaders import SQLAlchemyLoader
+    from scrapyio.item_loaders import (
+        BaseLoader,
+        CSVLoader,
+        JSONLoader,
+        SQLAlchemyLoader,
+    )
     from scrapyio.items import ItemManager
 
     log.info("Running the spider")

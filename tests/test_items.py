@@ -14,13 +14,14 @@ from pydantic import BaseModel
 
 from scrapyio import items
 from scrapyio.exceptions import IgnoreItemError
-from scrapyio.item_loaders import JSONLoader
-from scrapyio.item_loaders import ProxyLoader
+from scrapyio.item_loaders import JSONLoader, ProxyLoader
 from scrapyio.item_middlewares import BaseItemMiddleWare
-from scrapyio.items import Item
-from scrapyio.items import ItemManager
-from scrapyio.items import build_items_middlewares_chain
-from scrapyio.items import orjson_dumps_wrapper
+from scrapyio.items import (
+    Item,
+    ItemManager,
+    build_items_middlewares_chain,
+    orjson_dumps_wrapper,
+)
 from scrapyio.settings import CONFIGS
 
 

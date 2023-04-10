@@ -2,9 +2,7 @@
 These tests ensure that the scrapyio utility function works as expected.
 """
 
-from scrapyio.utils import first_not_none
-from scrapyio.utils import load_module
-from scrapyio.utils import random_filename
+from scrapyio.utils import first_not_none, load_module, random_filename
 
 
 def test_object_loading():
