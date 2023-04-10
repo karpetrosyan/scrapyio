@@ -129,5 +129,5 @@ class Engine:
                 await self._run_once()
                 await asyncio.sleep(self.loop_delay)
         finally:
-            log.info("Calling thear down on engine")
+            log.info("Calling tear down on engine")
             await self._tear_down()
