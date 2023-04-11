@@ -92,8 +92,8 @@ class Engine:
         clean_up_generator, response = response_and_generator
         soup = None
         if BeautifulSoup is not None:
-            with suppress(httpx.ResponseNotRead):
-                soup = BeautifulSoup(response.text, "html.parser")  # pragma: no cover
+            with suppress(httpx.ResponseNotRead):  # pragma: no cover
+                soup = BeautifulSoup(response.text, "html.parser")
 
         response.soup = soup  # type: ignore[attr-defined]
         gen = self.spider.parse(response=response)
