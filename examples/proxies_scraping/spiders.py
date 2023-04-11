@@ -1,6 +1,4 @@
-from bs4 import BeautifulSoup
-
-from scrapyio import BaseSpider, Item
+from scrapyio import BaseSpider, Item, Request
 
 
 class Proxy(Item):
@@ -11,11 +9,10 @@ class Proxy(Item):
 
 
 class Spider(BaseSpider):
-    start_requests = ["https://proxylist.to/http/"]
+    start_requests = [Request("https://proxylist.to/http/", method="GET", stream=False)]
 
     async def parse(self, response):
-        soup = BeautifulSoup(response.text, "html.parser")
-        all_rows = soup.select("tr")[1:]
+        all_rows = response.soup.select("tr")[1:]
         for row in all_rows:
             country = row.select_one(".country>span").text
             ip = row.select_one(".t_ip").text

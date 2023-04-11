@@ -2,7 +2,10 @@ import asyncio
 import inspect
 import logging
 import typing
+from contextlib import suppress
 from warnings import warn
+
+import httpx
 
 from scrapyio import Request
 from scrapyio.downloader import BaseDownloader, Downloader
@@ -78,11 +81,21 @@ class Engine:
     async def _handle_single_response(
         self, response_and_generator: CLEANUP_WITH_RESPONSE
     ) -> None:
+        try:  # pragma: no cover
+            from bs4 import BeautifulSoup
+        except ImportError:  # pragma: no cover
+            BeautifulSoup = None
         if not inspect.isasyncgenfunction(self.spider.parse):
             raise TypeError(
                 "Spider's `parse` must be an asynchronous generator function"
             )
         clean_up_generator, response = response_and_generator
+        soup = None
+        if BeautifulSoup is not None:
+            with suppress(httpx.ResponseNotRead):
+                soup = BeautifulSoup(response.text, "html.parser")  # pragma: no cover
+
+        response.soup = soup  # type: ignore[attr-defined]
         gen = self.spider.parse(response=response)
         async for yielded_value in gen:
             if isinstance(yielded_value, Request):
