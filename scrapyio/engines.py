@@ -104,7 +104,13 @@ class Engine:
             asyncio.create_task(self._handle_single_response(response))
             for response in responses
         ]
-        handled_responses = await asyncio.gather(*tasks, return_exceptions=True)
+        coro = asyncio.gather(*tasks)
+        try:
+            handled_responses = await coro
+        except BaseException as e:
+            coro.cancel()
+            raise e
+
         if hasattr(self.spider, "handle_parse_exception"):
             for handled_response in handled_responses:
                 if isinstance(handled_response, BaseException):
