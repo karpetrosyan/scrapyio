@@ -13,4 +13,5 @@ try:
     CONFIGS: ModuleType = __import__(SETTINGS_FILE_NAME_FOR_IMPORT)
 except ModuleNotFoundError:
     from scrapyio.templates import configuration_template
+
     CONFIGS = configuration_template

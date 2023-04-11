@@ -12,9 +12,7 @@ from httpx._types import (
 
 PROXY_CHAIN: typing.List[str] = []
 
-ITEM_MIDDLEWARES: typing.List[str] = [
-    "middlewares.ProxyCheckMiddleWare"
-]
+ITEM_MIDDLEWARES: typing.List[str] = ["middlewares.ProxyCheckMiddleWare"]
 
 # Middlewares
 #   path to the middlewares

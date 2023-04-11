@@ -117,28 +117,6 @@ async def test_engine_responses_handling(mocked_response, mocked_response1):
     assert ret is None
 
 
-@pytest.mark.anyio
-async def test_engine_responses_handling_exception_callback(
-    mocked_response, mocked_response1, monkeypatch
-):
-    exceptions = []
-
-    async def mocked_parse(response):
-        yield None
-        raise RuntimeError
-
-    def callback(exc):
-        exceptions.append(exc)
-
-    spider = TestSpider()
-    monkeypatch.setattr(spider, "handle_parse_exception", callback)
-    monkeypatch.setattr(spider, "parse", mocked_parse)
-    engine = Engine(spider=spider)
-    ret = await engine._handle_responses([mocked_response, mocked_response1])
-    assert ret is None
-    assert len(exceptions) == 2
-
-
 @pytest.mark.integtest
 @pytest.mark.anyio
 async def test_engine_requests_handling(mocked_request):

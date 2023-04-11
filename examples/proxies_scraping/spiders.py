@@ -1,6 +1,7 @@
-from scrapyio import BaseSpider
 from bs4 import BeautifulSoup
-from scrapyio import Item
+
+from scrapyio import BaseSpider, Item
+
 
 class Proxy(Item):
     country: str
@@ -20,9 +21,4 @@ class Spider(BaseSpider):
             ip = row.select_one(".t_ip").text
             port = row.select_one(".t_port").text
             type = row.select_one(".t_type").text
-            yield Proxy(
-                country=country,
-                ip=ip,
-                port=port,
-                type=type
-            )
+            yield Proxy(country=country, ip=ip, port=port, type=type)

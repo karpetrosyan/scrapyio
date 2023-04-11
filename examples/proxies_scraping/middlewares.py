@@ -1,10 +1,10 @@
-from scrapyio.item_middlewares import BaseItemMiddleWare
-from scrapyio.exceptions import IgnoreItemError
 import httpx
+
+from scrapyio.exceptions import IgnoreItemError
+from scrapyio.item_middlewares import BaseItemMiddleWare
 
 
 class ProxyCheckMiddleWare(BaseItemMiddleWare):
-
     async def process_item(self, item) -> None:
         scheme = item.type.lower()
         uri = f"{scheme}://{item.ip}:{item.port}"
@@ -13,5 +13,5 @@ class ProxyCheckMiddleWare(BaseItemMiddleWare):
                 response = await cl.get("http://google.com")
                 if not response.is_success:
                     raise IgnoreItemError
-            except:
+            except BaseException:
                 raise IgnoreItemError

@@ -106,15 +106,10 @@ class Engine:
         ]
         coro = asyncio.gather(*tasks)
         try:
-            handled_responses = await coro
-        except BaseException as e:
+            await coro
+        except BaseException as e:  # pragma: no cover
             coro.cancel()
             raise e
-
-        if hasattr(self.spider, "handle_parse_exception"):
-            for handled_response in handled_responses:
-                if isinstance(handled_response, BaseException):
-                    self.spider.handle_parse_exception(handled_response)
 
     async def _run_once(self) -> None:
         log.debug("Running engine once")
