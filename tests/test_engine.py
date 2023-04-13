@@ -8,12 +8,10 @@ from contextlib import suppress
 
 import pytest
 
-from scrapyio import CONFIGS
 from scrapyio.downloader import SessionDownloader
 from scrapyio.engines import Engine
 from scrapyio.http import clean_up_response
 from scrapyio.items import Item, ItemManager
-from scrapyio.middlewares import BaseMiddleWare
 from scrapyio.spider import BaseSpider
 
 
@@ -25,14 +23,6 @@ class TestSpider(BaseSpider):
 
     def handle_parse_exception(self, exc):
         ...  # pragma: no cover
-
-
-class ExceptionMiddleWare(BaseMiddleWare):
-    async def process_request(self, request):
-        raise RuntimeError("Test Exception")
-
-    async def process_response(self, response):
-        raise NotImplementedError()
 
 
 def test_engine_downloader_explicit_setting(monkeypatch):
@@ -134,25 +124,6 @@ async def test_engine_requests_handling(mocked_request):
         for clean_up, response in responses:
             await clean_up_response(clean_up)
     assert engine.spider.requests == []
-
-
-@pytest.mark.integtest
-@pytest.mark.anyio
-async def test_engine_downloader_exception_callback(mocked_request, monkeypatch):
-    monkeypatch.setattr(
-        CONFIGS, "MIDDLEWARES", ["tests.test_engine.ExceptionMiddleWare"]
-    )
-    req = mocked_request(url="/")
-    exceptions = []
-    engine = Engine(
-        spider=TestSpider(),
-        downloader_exception_callback=lambda exc: exceptions.append(exc),
-    )
-    engine.spider.requests.append(req)
-    await engine._send_all_requests_to_downloader()
-
-    assert len(exceptions) == 1
-    assert isinstance(exceptions[0], RuntimeError)
 
 
 @pytest.mark.integtest

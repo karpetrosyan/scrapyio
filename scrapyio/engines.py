@@ -64,14 +64,12 @@ class Engine:
                 )
             )
         self.spider.requests.clear()
-        responses: typing.Iterable[
-            typing.Optional[CLEANUP_WITH_RESPONSE]
-        ] = await asyncio.gather(
-            *request_tasks, return_exceptions=True
-        )  # type: ignore
-        for response in responses:
-            if isinstance(response, BaseException):
-                self.downloader_exception_callback(response)
+        coro = asyncio.gather(*request_tasks)  # type: ignore
+        try:
+            responses = await coro
+        except BaseException:  # pragma: no cover
+            coro.cancel()
+            raise
         return [
             response
             for response in responses
