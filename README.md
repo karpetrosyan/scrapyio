@@ -111,6 +111,7 @@ Scrapyio validates and serializes the data parsed from the website using `Pydant
 ```python
 from scrapyio import Item
 class Country(Item):
+    tablename: str = "MyTable" 
     name: str
     population: int
     capital: str
