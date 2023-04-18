@@ -9,6 +9,12 @@ import httpx
 
 from scrapyio import Request
 from scrapyio.downloader import BaseDownloader, Downloader
+from scrapyio.exceptions import (
+    DownloadFailedException,
+    InvalidParseMethodException,
+    InvalidYieldValueException,
+    ParseFailedException,
+)
 from scrapyio.http import clean_up_response
 from scrapyio.items import ItemManager
 from scrapyio.spider import BaseSpider, Item
@@ -67,9 +73,9 @@ class Engine:
         coro = asyncio.gather(*request_tasks)  # type: ignore
         try:
             responses = await coro
-        except BaseException:  # pragma: no cover
+        except BaseException as e:  # pragma: no cover
             coro.cancel()
-            raise
+            raise DownloadFailedException from e
         return [
             response
             for response in responses
@@ -84,7 +90,7 @@ class Engine:
         except ImportError:  # pragma: no cover
             BeautifulSoup = None
         if not inspect.isasyncgenfunction(self.spider.parse):
-            raise TypeError(
+            raise InvalidParseMethodException(
                 "Spider's `parse` must be an asynchronous generator function"
             )
         clean_up_generator, response = response_and_generator
@@ -103,7 +109,7 @@ class Engine:
             elif yielded_value is None:  # pragma: no cover
                 ...  # pragma: no cover
             else:
-                raise TypeError(
+                raise InvalidYieldValueException(
                     "Invalid type yielded, expected `Request` or `Item` got `%s`"
                     % yielded_value.__class__.__name__
                 )
@@ -120,7 +126,7 @@ class Engine:
             await coro
         except BaseException as e:  # pragma: no cover
             coro.cancel()
-            raise e
+            raise ParseFailedException from e
 
     async def _run_once(self) -> None:
         log.debug("Running engine once")
@@ -149,6 +155,8 @@ class Engine:
             while self.spider.requests:
                 await self._run_once()
                 await asyncio.sleep(self.loop_delay)
+        except Exception as e:  # pragma: no cover
+            log.error("Exception %s was raised" % e.__class__.__name__)
         finally:
             log.info("Calling tear down on engine")
             await self._tear_down()

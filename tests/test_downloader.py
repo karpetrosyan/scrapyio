@@ -20,7 +20,7 @@ from scrapyio.downloader import (
     send_request,
     send_request_with_session,
 )
-from scrapyio.exceptions import IgnoreRequestError
+from scrapyio.exceptions import IgnoreRequestException
 from scrapyio.middlewares import BaseMiddleWare
 from scrapyio.settings import CONFIGS
 
@@ -96,7 +96,7 @@ class IgnoreMiddleWare(BaseMiddleWare):
         raise NotImplementedError
 
     async def process_request(self, request):
-        raise IgnoreRequestError()
+        raise IgnoreRequestException()
 
 
 @pytest.mark.anyio

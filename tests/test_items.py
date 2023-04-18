@@ -13,7 +13,7 @@ import pytest
 from pydantic import BaseModel
 
 from scrapyio import items
-from scrapyio.exceptions import IgnoreItemError
+from scrapyio.exceptions import IgnoreItemException
 from scrapyio.item_loaders import JSONLoader, ProxyLoader
 from scrapyio.item_middlewares import BaseItemMiddleWare
 from scrapyio.items import (
@@ -40,7 +40,7 @@ class TestItemMiddleWare(BaseItemMiddleWare):
 
 class TestIgnoreItemMiddleWare(BaseItemMiddleWare):
     async def process_item(self, item: Item):
-        raise IgnoreItemError()
+        raise IgnoreItemException()
 
 
 def test_build_items_middleware(monkeypatch):

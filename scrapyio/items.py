@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from scrapyio.item_loaders import ProxyLoader
 
-from .exceptions import IgnoreItemError
+from .exceptions import IgnoreItemException
 from .item_loaders import BaseLoader
 from .settings import CONFIGS
 from .types import ITEM_ADDED_CALLBACK_TYPE, ITEM_IGNORING_CALLBACK_TYPE
@@ -90,7 +90,7 @@ class BaseItemsManager(ABC):
         for middleware in self.middlewares:
             try:
                 await middleware.process_item(item=item)
-            except IgnoreItemError:
+            except IgnoreItemException:
                 if self.ignoring_callback:
                     await self.ignoring_callback(item, middleware)
                 return None

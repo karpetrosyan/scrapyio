@@ -10,6 +10,7 @@ import pytest
 
 from scrapyio.downloader import SessionDownloader
 from scrapyio.engines import Engine
+from scrapyio.exceptions import InvalidParseMethodException, InvalidYieldValueException
 from scrapyio.http import clean_up_response
 from scrapyio.items import Item, ItemManager
 from scrapyio.spider import BaseSpider
@@ -49,7 +50,7 @@ async def test_invalid_response_parsing_exception(mocked_response, monkeypatch):
     monkeypatch.setattr(TestSpider, "parse", lambda: ...)
     engine = Engine(spider=TestSpider())
     with pytest.raises(
-        TypeError,
+        InvalidParseMethodException,
         match="Spider's `parse` must be " "an asynchronous generator function",
     ):
         await engine._handle_single_response(response_and_generator=mocked_response)
@@ -81,7 +82,7 @@ async def test_engine_response_parse_invalid_yielding(
     monkeypatch.setattr(TestSpider, "parse", parse)
     engine = Engine(spider=TestSpider())
     with pytest.raises(
-        TypeError,
+        InvalidYieldValueException,
         match=r"Invalid type yielded, expected " r"`Request` or `Item` got `int`",
     ):
         await engine._handle_single_response(response_and_generator=mocked_response)

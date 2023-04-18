@@ -15,7 +15,7 @@ from httpx._types import (
 
 from scrapyio.utils import first_not_none
 
-from .exceptions import IgnoreRequestError
+from .exceptions import IgnoreRequestException
 from .http import Request, clean_up_response
 from .middlewares import BaseMiddleWare, build_middlewares_chain
 from .settings import CONFIGS
@@ -127,7 +127,7 @@ class BaseDownloader(ABC):
                     request=next_request
                 )
             return clean_up, response
-        except IgnoreRequestError:
+        except IgnoreRequestException:
             return None
 
     @abstractmethod

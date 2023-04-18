@@ -42,7 +42,7 @@ def run(
     sql: typing.Optional[str],
 ):
     from scrapyio.engines import Engine
-    from scrapyio.exceptions import SpiderNotFound
+    from scrapyio.exceptions import SpiderNotFoundException
     from scrapyio.item_loaders import (
         BaseLoader,
         CSVLoader,
@@ -60,7 +60,7 @@ def run(
         log.debug("Spiders file was imported")
     except ImportError:
         log.debug("When attempting to import the spiders file, an exception was raised")
-        raise SpiderNotFound(
+        raise SpiderNotFoundException(
             "File `spiders.py` was not found, make sure you're "
             "calling scrapyio from the directory scrapyio created."
         )
@@ -68,7 +68,7 @@ def run(
     spider_class = getattr(spiders, spider, None)
 
     if spider_class is None:
-        raise SpiderNotFound(
+        raise SpiderNotFoundException(
             "Spider `%s` was not " "found in the `spiders.py` file" % spider
         )
 
