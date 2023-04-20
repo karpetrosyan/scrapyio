@@ -35,11 +35,13 @@ def new(name):
 @click.option("-j", "--json", type=str, help="Json file path")
 @click.option("-c", "--csv", type=str, help="Csv file path")
 @click.option("-s", "--sql", type=str, help="SQL URI supported by SQLAlchemy")
+@click.option("-d", "--delay", type=int, help="Engine loop delay")
 def run(
     spider: str,
     json: typing.Optional[str],
     csv: typing.Optional[str],
     sql: typing.Optional[str],
+    delay: typing.Optional[int],
 ):
     from scrapyio.engines import Engine
     from scrapyio.exceptions import SpiderNotFoundException
@@ -74,6 +76,8 @@ def run(
 
     loaders: typing.List[BaseLoader] = []
     loader: BaseLoader
+    if delay is None:
+        delay = 0
 
     if json is not None:
         log.debug("Creating the JSON loader")
@@ -92,6 +96,6 @@ def run(
 
     item_manager = ItemManager(loaders=loaders)
     log.debug("Creating the Engine instance")
-    engine = Engine(spider=spider_class(), items_manager=item_manager)
+    engine = Engine(spider=spider_class(), items_manager=item_manager, loop_delay=delay)
     log.info("Running engine")
     asyncio.run(engine.run())
