@@ -1,7 +1,7 @@
 .[orjson, sqlite]
 
 # packaging
-hatch==1.6.3
+hatch==1.7.0
 
 # typing
 mypy==1.1.1
